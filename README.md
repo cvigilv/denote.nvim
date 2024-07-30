@@ -5,11 +5,14 @@ This Neovim plugin provides a command `:Denote note` that prompts for a title an
 `DATE==SIGNATURE--TITLE__KEYWORDS.EXTENSION`
 
 For example:
-1. `20240601T174946--how-to-tie-a-tie__lifeskills_clothes.md`
-2. `20240601T180054--title-only.org`
-3. `20240601T193022__only_keywords.norg`
-4. `20240601T200121.txt`
-5. `20240601T213392==1a1--i-have-a-signature__denote.csv`
+
+```
+20240601T174946--how-to-tie-a-tie__lifeskills_clothes.md
+20240601T180054--title-only.org
+20240601T193022__only_keywords.norg
+20240601T200121.txt
+20240601T213392==1a1--i-have-a-signature__denote.csv
+```
 
 That's all this does: create and consistently rename text files using the above scheme. No frontmatter, links, etc. I have overcomplicated my notes too many times with fancy Org Mode and Zettelkasten systems and this is my minimalist endgame.
 
@@ -21,7 +24,7 @@ Example config via [lazy.nvim](https://github.com/folke/lazy.nvim)
 
 ```lua
 {
-  "DefaultGen/simple-denote.nvim",
+  "https://codeberg.org/historia/simple-denote.nvim",
   opts = {
     ext = "md",             -- Note file extension (e.g. md, org, norg, txt)
     dir = "~/notes",        -- Notes directory (should already exist)
@@ -46,12 +49,12 @@ vim.keymap.set({'n','v'}, '<leader>nz', ":Denote signature<cr>", { desc = "Chang
 
 ## Manual Install
 
-To install without a package manager:
+To install without a plugin manager:
 
 ```bash
 mkdir -p ~/.local/share/nvim/site/pack/simple-denote.nvim/start
 cd ~/.local/share/nvim/site/pack/simple-denote.nvim/start
-git clone https://github.com/DefaultGen/simple-denote.nvim
+git clone https://codeberg.org/historia/simple-denote.nvim
 ```
 
 Add the following to `~/.config/nvim/init.lua`
@@ -63,13 +66,6 @@ require('simple-denote').setup({
   add_heading = true,
   retitle_heading = true,
 })
-```
-
-### Manual upgrade
-
-```bash
-cd ~/.local/share/nvim/site/pack/simple-denote.nvim/start/simple-denote.nvim
-git pull
 ```
 
 # :Denote Command
