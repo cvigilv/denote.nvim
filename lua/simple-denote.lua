@@ -12,14 +12,16 @@ function M.load_cmd(options)
     elseif opts.fargs[1] == "keywords" then
       api.keywords(options)
     elseif opts.fargs[1] == "signature" then
-      api.signature(options)
+      api.signature()
+    elseif opts.fargs[1] == "extension" then
+      api.extension()
     else
       error("Unsupported operation " .. opts.fargs[1])
     end
   end, {
     nargs = 1,
     complete = function()
-      return { "note", "title", "keywords", "signature" }
+      return { "note", "title", "keywords", "signature", "extension" }
     end,
   })
 end

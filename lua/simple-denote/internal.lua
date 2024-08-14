@@ -18,7 +18,7 @@ function M.plain_format(str)
 end
 
 ---@param str string
----@param char delimiter that replaces spaces (- for titles, _ for keywords, = for sigs)
+---@param char string delimiter that replaces spaces (- for titles, _ for keywords, = for sigs)
 ---Format the title/keywords/sig string of a Denote filename
 function M.format_denote_string(str, char)
   str = M.plain_format(str)
@@ -28,7 +28,6 @@ function M.format_denote_string(str, char)
 end
 
 ---@param title string heading text
----@param ext string file extension
 ---Set the first line to title if it's an empty buffer or the first line is a heading
 function M.set_heading(options, title)
   if title == "" then return end
@@ -108,11 +107,10 @@ function M.keyword(options, filename, keywords)
   M.replace_file(filename, new_filename)
 end
 
----@param options table
 ---@param filename string
 ---@param sig string
 ---Add/change the ==signature in the filename
-function M.signature(options, filename, sig)
+function M.signature(filename, sig)
   local prefix, suffix = filename:match("^(.-%d%d%d%d%d%d%d%dT%d%d%d%d%d%d)(.*)")
   if not prefix then
     error("This doesn't look like a Denote filename")
@@ -120,6 +118,18 @@ function M.signature(options, filename, sig)
   suffix = suffix:gsub("==[^%-%_%.]*", "")
   sig = M.format_denote_string(sig, "=")
   local new_filename = prefix .. sig .. suffix
+  M.replace_file(filename, new_filename)
+end
+
+---@param filename string
+---@param ext string
+---Replace the extension in the file with ext
+function M.extension(filename, ext)
+  local prefix, _ = filename:match("^(.-%d%d%d%d%d%d%d%dT%d%d%d%d%d%d.*%.)(.+)$")
+  if not prefix then
+    error("This doesn't look like a Denote file")
+  end
+  local new_filename = prefix .. ext
   M.replace_file(filename, new_filename)
 end
 

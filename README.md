@@ -43,8 +43,9 @@ Maybe you want to set keymaps for the commands as well
 ```lua
 vim.keymap.set({'n','v'}, '<leader>nn', ":Denote note<cr>",      { desc = "New note"         })
 vim.keymap.set({'n','v'}, '<leader>nt', ":Denote title<cr>",     { desc = "Change title"     })
-vim.keymap.set({'n','v'}, '<leader>nk', ":Denote keywords<cr>",  { desc = "Change keywords"      })
+vim.keymap.set({'n','v'}, '<leader>nk', ":Denote keywords<cr>",  { desc = "Change keywords"  })
 vim.keymap.set({'n','v'}, '<leader>nz', ":Denote signature<cr>", { desc = "Change signature" })
+vim.keymap.set({'n','v'}, '<leader>ne', ":Denote extension<cr>", { desc = "Change extension" })
 ```
 
 ## Manual Install
@@ -85,6 +86,9 @@ require('simple-denote').setup({
 " Rename the current note with a signature
 " This has a user-defined meaning and no particular purpose
 :Denote signature
+
+" Rename the current file to a new extension
+:Denote extension
 ```
 
 # Credits
