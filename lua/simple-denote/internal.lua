@@ -73,7 +73,7 @@ end
 ---@param title string
 --- Retitles the filename and changes the first heading of the note
 function M.title(options, filename, title)
-  local prefix = filename:match("^(.-%d%d%d%d%d%d%d%dT%d%d%d%d%d%d).*")
+  local prefix, ext = filename:match("^(.-%d%d%d%d%d%d%d%dT%d%d%d%d%d%d).*(%..+)")
   if not prefix then
     error("This doesn't look like a Denote filename")
   end
@@ -86,24 +86,23 @@ function M.title(options, filename, title)
     M.set_heading(options, title)
   end
   title = M.format_denote_string(title, "-")
-  local new_filename = prefix .. sig .. title .. keywords .. "." .. options.ext
+  local new_filename = prefix .. sig .. title .. keywords .. ext
   M.replace_file(filename, new_filename)
 end
 
----@param options table
 ---@param filename string
 ---@param keywords string
 ---Replaces the __keywords in filename
-function M.keyword(options, filename, keywords)
-  local prefix = filename:match("^(.*)__.*$")
+function M.keyword(filename, keywords)
+  local prefix, ext = filename:match("^(.*)__.*(%..+)$")
   if not prefix then
-    prefix = filename:match("^(.*)%..-$")
+    prefix, ext = filename:match("^(.*)(%..+)$")
   end
   if not prefix:match("%d%d%d%d%d%d%d%dT%d%d%d%d%d%d") then
     error("This doesn't look like a Denote filename")
   end
   keywords = M.format_denote_string(keywords, "_")
-  local new_filename = prefix .. keywords .. "." .. options.ext
+  local new_filename = prefix .. keywords .. ext
   M.replace_file(filename, new_filename)
 end
 

@@ -10,7 +10,7 @@ function M.load_cmd(options)
     elseif opts.fargs[1] == "title" then
       api.title(options)
     elseif opts.fargs[1] == "keywords" then
-      api.keywords(options)
+      api.keywords()
     elseif opts.fargs[1] == "signature" then
       api.signature()
     elseif opts.fargs[1] == "extension" then

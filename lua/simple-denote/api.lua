@@ -36,10 +36,9 @@ function M.title(options, filename, title)
   internal.title(options, filename, title)
 end
 
----@param options table
 ---@param filename string|nil
 ---@param keywords string|nil
-function M.keywords(options, filename, keywords)
+function M.keywords(filename, keywords)
   if not filename then
     filename = vim.fn.expand("%")
   end
@@ -49,7 +48,7 @@ function M.keywords(options, filename, keywords)
     end)
   end
   if not keywords then return end
-  internal.keyword(options, filename, keywords)
+  internal.keyword(filename, keywords)
 end
 
 ---@param filename string|nil
