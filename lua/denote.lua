@@ -1,7 +1,7 @@
 local M = {}
 
-local config = require("simple-denote.config")
-local api = require("simple-denote.api")
+local config = require("denote.config")
+local api = require("denote.api")
 
 function M.load_cmd(options)
   vim.api.nvim_create_user_command("Denote", function(opts)

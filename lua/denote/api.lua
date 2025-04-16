@@ -1,6 +1,6 @@
 local M = {}
 
-local internal = require("simple-denote.internal")
+local internal = require("denote.internal")
 
 ---@param options table
 ---@param title string|nil

@@ -1,6 +1,8 @@
-# simple-denote.nvim
+# denote.nvim
 
-This Neovim plugin provides a command `:Denote note` that prompts for a title and keywords (tags), then creates a new file in a flat notes directory using the [Emacs Denote package's file-naming scheme](https://protesilaos.com/emacs/denote#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d):
+This Neovim plugin provides a command `:Denote note` that prompts for a title and keywords
+(tags), then creates a new file in a flat notes directory using the [Emacs Denote package's
+file-naming scheme](https://protesilaos.com/emacs/denote#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d):
 
 `DATE==SIGNATURE--TITLE__KEYWORDS.EXTENSION`
 
@@ -14,9 +16,13 @@ For example:
 20240601T213392==1a1--i-have-a-signature__denote.csv
 ```
 
-That's all this does: create and consistently rename text files using the above scheme. No frontmatter, links, etc. I have overcomplicated my notes too many times with fancy Org Mode and Zettelkasten systems and this is my minimalist endgame.
+That's all this does: create and consistently rename text files using the above scheme. No
+frontmatter, links, etc. I have overcomplicated my notes too many times with fancy Org Mode and
+Zettelkasten systems and this is my minimalist endgame.
 
-The file-naming should be 1:1 with denote.el, down to minor things like triming/combining excess whitespace, removing special characters, disallowing multi-word keywords, and separating signature terms with = (e.g. `==three=word=sig`).
+The file-naming should be 1:1 with denote.el, down to minor things like triming/combining excess
+whitespace, removing special characters, disallowing multi-word keywords, and separating
+signature terms with = (e.g. `==three=word=sig`).
 
 # Installation / Config
 
@@ -24,7 +30,7 @@ Example config via [lazy.nvim](https://github.com/folke/lazy.nvim)
 
 ```lua
 {
-  "https://codeberg.org/historia/simple-denote.nvim",
+  "cvigilv/denote.nvim",
   opts = {
     ext = "md",             -- Note file extension (e.g. md, org, norg, txt)
     dir = "~/notes",        -- Notes directory (should already exist)
@@ -53,15 +59,15 @@ vim.keymap.set({'n','v'}, '<leader>ne', ":Denote extension<cr>", { desc = "Chang
 To install without a plugin manager:
 
 ```bash
-mkdir -p ~/.local/share/nvim/site/pack/simple-denote.nvim/start
-cd ~/.local/share/nvim/site/pack/simple-denote.nvim/start
-git clone https://codeberg.org/historia/simple-denote.nvim
+mkdir -p ~/.local/share/nvim/site/pack/denote.nvim/start
+cd ~/.local/share/nvim/site/pack/denote.nvim/start
+git clone https://github.com/cvigilv/denote.nvim.git
 ```
 
 Add the following to `~/.config/nvim/init.lua`
 
 ```lua
-require('simple-denote').setup({
+require("denote").setup({
   ext = "md",
   dir = "~/notes",
   add_heading = true,
@@ -91,9 +97,25 @@ require('simple-denote').setup({
 :Denote extension
 ```
 
+# Road map
+
+## v1.0
+- [ ] Add front-matter generator
+- [ ] Handle autorenaming of files on save
+- [ ] Handle front-matter updating on save
+
+## v2.0
+- [ ] Add extensions
+    - [ ] Custom highlighting in oil.nvim
+    - [ ] Search capabilities with telescope.nvim
+    - [ ] Note creation via orgmode capture
+
 # Credits
 
-* [HumanEntity/denote.nvim](https://github.com/HumanEntity/denote.nvim) - This project was based on denote.nvim and modified to suit my personal preference or closer adhere to the original Denote spec.
+* [historia/simple-denote.nivm](https://codeberg.org/historia/simple-denote.nvim) - This is a
+  fork from this project, which includes integration to other common plugins I use to manage my
+  PKM (oil.nvim, telescope.nvim, nvim-orgmode, etc.)
+* [HumanEntity/denote.nvim](https://github.com/HumanEntity/denote.nvim)
 * [denote.el](https://protesilaos.com/emacs/denote) - The original Emacs package
 
 # License
