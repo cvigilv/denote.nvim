@@ -99,16 +99,25 @@ require("denote").setup({
 
 # Road map
 
-## v1.0
-- [ ] Add front-matter generator
-- [ ] Handle autorenaming of files on save
-- [ ] Handle front-matter updating on save
-
-## v2.0
-- [ ] Add extensions
-    - [ ] Custom highlighting in oil.nvim
+- [ ] Documentation
+    - [ ] Rewrite `:h denote`
+    - [ ] Add API usage examples
+- [ ] House-keeping
+    - [ ] Refactor and clean-up code
+    - [ ] Change `setup` logic
+    - [ ] Add types
+    - [ ] Add docstrings
+    - [ ] Add logging
+    - [ ] Add tests
+- [ ] [Points of entry](https://protesilaos.com/emacs/denote#h:17896c8c-d97a-4faa-abf6-31df99746ca6)
+    - [ ] Implement [The `denote-prompts` option](https://protesilaos.com/emacs/denote#h:f9204f1f-fcee-49b1-8081-16a08a338099)
+- [ ] [Front mattter](https://protesilaos.com/emacs/denote#h:13218826-56a5-482a-9b91-5b6de4f14261)
+    - [ ] Front matter generator for `org`, `markdown` and `text`
+    - [ ] Front matter format (`denote-{org,text,toml,yaml}-front-matter`)
+    - [ ] Regenerate front matter (`denote-add-front-matter`)
+- [ ] Extensions
+    - [ ] Custom highlighting in oil.nvim ([Fontification in Dired](https://protesilaos.com/emacs/denote#h:337f9cf0-9f66-45af-b73f-f6370472fb51))
     - [ ] Search capabilities with telescope.nvim
-    - [ ] Note creation via orgmode capture
 
 # Credits
 
