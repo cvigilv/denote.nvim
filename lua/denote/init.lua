@@ -43,6 +43,11 @@ function M.setup(options)
   config.options = vim.tbl_deep_extend("force", config.defaults, options or {})
   M.fix_options()
   M.load_cmd(config.options)
+
+  -- Extensions
+  if config.options.extensions.oil then
+    require("denote.extensions.oil").setup(options)
+  end
 end
 
 return M
