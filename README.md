@@ -116,7 +116,7 @@ require("denote").setup({
     - [ ] Front matter format (`denote-{org,text,toml,yaml}-front-matter`)
     - [ ] Regenerate front matter (`denote-add-front-matter`)
 - [ ] Extensions
-    - [ ] Custom highlighting in oil.nvim ([Fontification in Dired](https://protesilaos.com/emacs/denote#h:337f9cf0-9f66-45af-b73f-f6370472fb51))
+    - [X] Custom highlighting in oil.nvim ([Fontification in Dired](https://protesilaos.com/emacs/denote#h:337f9cf0-9f66-45af-b73f-f6370472fb51))
     - [ ] Search capabilities with telescope.nvim
 
 # Credits
