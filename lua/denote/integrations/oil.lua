@@ -18,19 +18,14 @@ end
 
 local M = {}
 
+---Setup stevearc/oil.nvim integration
+---@param opts Denote.Configuration
 function M.setup(opts)
-  -- Define highlight groups
-  vim.cmd([[
-  hi def link DenoteDate Number
-  hi def link DenoteSignature Comment
-  hi def link DenoteTitle Title
-  hi def link DenoteKeywords Special
-  hi def link DenoteExtension Comment
-  ]])
+  require("denote.helpers.highlights").setup()
 
   -- Add highlighting to denote file naming convention components in `opts.dir` Oil buffer
   vim.api.nvim_create_autocmd("BufReadPost", {
-    pattern = "oil://" .. vim.fs.abspath(opts.dir) .. "*",
+    pattern = "oil://" .. vim.fs.abspath(opts.directory) .. "*",
     group = vim.api.nvim_create_augroup("denote.extensions.oil", { clear = false }),
     desc = "Highlight denote-compliant filenames in `opts.dir` Oil buffer",
     callback = setup_highlights,
