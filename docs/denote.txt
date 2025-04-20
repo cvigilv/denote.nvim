@@ -65,23 +65,23 @@ But we’ll let you get back to work. Don’t Eschew or Neglect your Obligations
 Tasks, and Engagements.
 
 ==============================================================================
-2. Setup                                                               *setup*
+2. Setup                                                        *denote-setup*
 
 TODO
 
 
 ==============================================================================
-3. API                                                                   *api*
+3. API                                                            *denote-api*
 
 TODO
 
 ==============================================================================
-4. Extensions                                                     *extensions*
+4. Integrations                                          *denote-integrations*
 
-                                                              *extensions-oil*
+                                                                  *denote-oil*
 4.1 stevearc/oil.nvim ~
 
-This extension enhances the functionality of `denote` within `oil` filetype
+This integration enhances the functionality of `denote` within `oil` filetype
 buffers by implementing custom syntax highlighting for the various components
 of the Denote file naming convention. It aims to improve the visual clarity
 and user experience when navigating and managing Denote files through the Oil
@@ -90,7 +90,7 @@ file explorer interface.
 To enable, add to your `denote.nvim` configuration the following: >
     opts = {
       ...
-      extensions = {
+      integrations = {
         oil = true
       }
     }
@@ -98,13 +98,94 @@ To enable, add to your `denote.nvim` configuration the following: >
 
 The default highlight groups are defined as follows: >
     hi def link DenoteDate      Number
-    hi def link DenoteSignature Comment
+    hi def link DenoteSignature Special
     hi def link DenoteTitle     Title
-    hi def link DenoteKeywords  Special
+    hi def link DenoteKeywords  Tag
     hi def link DenoteExtension Comment
 <
-
 To overwrite or clear this groups, refer to |highlight|.
+
+-----------------------------------------------------------------------------
+
+                                                           *denote-telescope*
+4.1 nvim-telescope/telescope.nvim ~
+
+This module provides a Telescope integration for the Denote plugin, allowing
+users to search and navigate Denote files using Telescope's interface.
+
+SETUP                                                 *denote-telescope-setup*
+
+To enable this integration, add to your `denote.nvim` configuration the
+following: >
+    opts = {
+      ...
+      integrations = {
+        telescope = true
+      }
+    }
+<
+
+This will enable the integration with it's default configuration, which is
+the following: >
+    opts = {
+        ...
+        integrations = {
+            telescope = {
+                enabled = true,
+                opts = {}
+            }
+        }
+    }
+<
+
+You can customize the look and feel of the picker by provinding options inside
+the `integrations.telescope.opts` table. For more information refer to
+|telescope|.
+
+OPTIONS                                             *denote-telescope-options*
+
+{enabled}
+    Whether the integration is enabled.
+
+{opts}
+    The options to pass to the custom picker.
+
+USAGE                                                 *denote-telescope-usage*
+
+After setup, you can use the search function:
+>
+    Denote search
+<
+and use the 
+
+This will open a Telescope picker to search through your Denote files.
+
+DISPLAY FORMAT                                      *denote-telescope-display*
+
+The Telescope picker displays the following information, in the following
+order, for each Denote file:
+
+    1. Timestamp
+    2. Signature
+    3. Title
+    4. Keywords
+    5. File extension
+    6. Filename (if not in standard Denote format)
+
+Each component is highlighted differently for easy recognition. The default
+highlight groups are defined as follows: >
+    hi def link DenoteDate      Number
+    hi def link DenoteSignature Special
+    hi def link DenoteTitle     Title
+    hi def link DenoteKeywords  Tag
+    hi def link DenoteExtension Comment
+<
+To overwrite or clear this groups, refer to |highlight|.
+
+REQUIREMENTS                                    *denote-telescope-requirements*
+
+This integrations requires the Telescope plugin to be installed and available.
+If Telescope is not found, an error will be raised.
 
 ==============================================================================
                                                                    *changelog*
