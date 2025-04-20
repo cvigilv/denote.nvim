@@ -38,6 +38,9 @@ end
 
 local M = {}
 
+
+--- Setup Telescope integration
+---@param opts Denote.Configuration User configuration
 M.setup = function(opts)
   -- Check if telescope exists
   local telescope_installed, _ = pcall(require, "telescope")
@@ -50,8 +53,9 @@ M.setup = function(opts)
   require("denote.helpers.highlights").setup()
 
   -- Generate searchers
-  M.search = function(tele_opts)
-    tele_opts = tele_opts or {}
+  M.search = function(options)
+    ---@type Denote.Configuration
+    local tele_opts = options.integrations.telescope.opts
 
     -- Define how to build entry for Telescope
     local make_display = function(entry)
@@ -79,10 +83,10 @@ M.setup = function(opts)
       })
     end
 
-    local files = vim.fn.glob(opts.directory .. "*", false, true)
+    local files = vim.fn.glob(options.directory .. "*", false, true)
 
     pickers
-      .new(tele_opts, {
+      .new({
         prompt_title = "Find Denote Files",
         finder = finders.new_table({
           results = files,
@@ -95,9 +99,9 @@ M.setup = function(opts)
             }
           end,
         }),
-        sorter = conf.file_sorter(tele_opts),
-        previewer = conf.file_previewer(tele_opts),
-      })
+        sorter = conf.file_sorter({}),
+        previewer = conf.file_previewer({}),
+      }, tele_opts)
       :find()
   end
 end

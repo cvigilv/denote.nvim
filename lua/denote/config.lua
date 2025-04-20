@@ -2,9 +2,13 @@
 ---@author Carlos Vigil-Vásquez
 ---@license MIT 2025
 
+---@class Denote.Integrations.Telescope.Configuration
+---@field enabled boolean
+---@field opts table?
+
 ---@class Denote.Integrations.Configuration
 ---@field oil boolean Activate `stevearc/oil.nvim` extension
----@field telescope boolean Activate `nvim-telescope/telescope.nvim` extension
+---@field telescope boolean|Denote.Integrations.Telescope.Configuration
 
 ---@class Denote.Configuration
 ---@field filetype string? Default note file type
@@ -23,7 +27,7 @@ local defaults = {
   heading_char = "auto",
   integrations = {
     oil = false,
-    telescope = true,
+    telescope = { enabled = true, {} },
   },
 }
 
@@ -43,6 +47,11 @@ local function update_auto_options(opts)
     elseif opts.filetype == "org" or opts.filetype == "norg" then
       opts.heading_char = "*"
     end
+  end
+
+  if type(opts.integrations.telescope) == "boolean" then
+    ---@diagnostic disable-next-line: assign-type-mismatch
+    opts.integrations.telescope = { enabled = opts.integrations.telescope, opts = {} }
   end
 
   return opts
@@ -68,7 +77,7 @@ M.update_config = function(opts)
     ["retitle_heading"] = { opts.add_heading, "boolean" },
     ["heading_char"] = { opts.heading_char, "string" },
     ["integrations.oil"] = { opts.integrations.oil, "boolean" },
-    ["integrations.telescope"] = { opts.integrations.telescope, "boolean" },
+    ["integrations.telescope"] = { opts.integrations.telescope, "table" },
   })
 
   return opts
