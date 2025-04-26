@@ -7,7 +7,7 @@ local api = require("denote.api")
 local M = {}
 
 ---Setup Denote excommands
----@param options Denote.Configuration|nil User provided configuration table
+---@param options Denote.Configuration User provided configuration table
 M.setup = function(options)
   vim.api.nvim_create_user_command("Denote", function(opts)
     if opts.fargs[1] == "note" then
@@ -20,8 +20,10 @@ M.setup = function(options)
       api.signature()
     elseif opts.fargs[1] == "extension" then
       api.extension()
+    elseif opts.fargs[1] == "rename" then
+      api.rename()
     ---@diagnostic disable-next-line: need-check-nil
-    elseif options.integrations.telescope and opts.fargs[1] == "search" then
+    elseif opts.fargs[1] == "search" and options.integrations.telescope then
       require("denote.integrations.telescope").search(options)
     else
       error("Unsupported operation " .. opts.fargs[1])
@@ -29,9 +31,17 @@ M.setup = function(options)
   end, {
     nargs = 1,
     complete = function()
-      local subcommands = { "note", "title", "keywords", "signature", "extension" }
+      -- Builtin
+      local subcommands = {
+        "note",
+        "title",
+        "keywords",
+        "signature",
+        "extension",
+        "rename",
+      }
 
-      ---@diagnostic disable-next-line: need-check-nil
+      -- Integrationg
       if options.integrations.telescope then
         table.insert(subcommands, "search")
       end
