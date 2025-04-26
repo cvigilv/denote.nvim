@@ -23,7 +23,7 @@ M.setup = function(options)
     elseif opts.fargs[1] == "rename" then
       api.rename()
     ---@diagnostic disable-next-line: need-check-nil
-    elseif opts.fargs[1] == "search" and options.integrations.telescope then
+    elseif opts.fargs[1] == "search" and options.integrations.telescope.enabled then
       require("denote.integrations.telescope").search(options)
     else
       error("Unsupported operation " .. opts.fargs[1])
@@ -42,7 +42,7 @@ M.setup = function(options)
       }
 
       -- Integrationg
-      if options.integrations.telescope then
+      if options.integrations.telescope.enabled then
         table.insert(subcommands, "search")
       end
 
