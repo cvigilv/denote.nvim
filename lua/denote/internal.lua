@@ -1,19 +1,42 @@
+---@module "denote.internal"
+---@author Carlos Vigil-Vásquez
+---@license MIT 2025
+
 local M = {}
 
+local patterns = {
+  date = "(%d%d%d%d%d%d%d%dT%d%d%d%d%d%d)",
+  signature = "==([a-zA-Z0-9=]+)",
+  title = "%-%-([a-z0-9%-]+)",
+  keywords = "__([a-z0-9_]+)",
+  extension = "(%.[^%s%.]+)",
+}
+local separators = {
+  date = nil,
+  signature = "=",
+  title = "-",
+  keywords = "_",
+  extension = nil,
+}
+
+--- UTILS
 ---@param str string
 ---Trim whitespace on either end of string
 function M.trim(str)
-   local from = str:match"^%s*()"
-   return from > #str and "" or str:match(".*%S", from)
+  local from = str:match("^%s*()")
+  return from > #str and "" or str:match(".*%S", from)
 end
 
 ---@param str string
 ---Make lowercase, remove special chars, remove extraneous spaces
 function M.plain_format(str)
-  str = str:gsub("[^%w%s]","")
+  if str == nil then
+    return ""
+  end
+  str = str:gsub("[^%w%s]", "")
   str = str:lower()
   str = M.trim(str)
-  str = str:gsub("%s+"," ")
+  str = str:gsub("%s+", " ")
   return str
 end
 
@@ -22,7 +45,9 @@ end
 ---Format the title/keywords/sig string of a Denote filename
 function M.format_denote_string(str, char)
   str = M.plain_format(str)
-  if str == "" then return "" end
+  if str == "" then
+    return ""
+  end
   str = char .. char .. str:gsub("%s", char)
   return str
 end
@@ -30,12 +55,16 @@ end
 ---@param title string heading text
 ---Set the first line to title if it's an empty buffer or the first line is a heading
 function M.set_heading(options, title)
-  if title == "" then return end
+  if title == "" then
+    return
+  end
   local first_char = vim.api.nvim_buf_get_lines(0, 0, 1, false)[1]:sub(1, 1)
   if first_char == "" or first_char == options.heading_char then
     local prefix = options.heading_char
-    if prefix ~= "" then prefix = prefix .. " " end
-    vim.api.nvim_buf_set_lines(0, 0, 1, false, {prefix .. title})
+    if prefix ~= "" then
+      prefix = prefix .. " "
+    end
+    vim.api.nvim_buf_set_lines(0, 0, 1, false, { prefix .. title })
   end
 end
 
@@ -44,11 +73,45 @@ end
 ---Save new file, delete old file
 function M.replace_file(old_filename, new_filename)
   if old_filename ~= new_filename then
-    vim.cmd('saveas ' .. new_filename)
-    vim.cmd('silent !rm ' .. old_filename)
+    vim.cmd("saveas " .. new_filename)
+    vim.cmd("silent !rm " .. old_filename)
   end
 end
 
+---Generates a timestamp for a given file based on its creation or modification time.
+---@param filename string The path to the file
+---@return string|nil Denote formatted timestamp or nil if an error occurs
+function M.generate_timestamp(filename)
+  ---@diagnostic disable-next-line: undefined-field
+  local stat = vim.uv.fs_stat(vim.fs.abspath(filename))
+  if not stat then
+    error("Error: Unable to get file stats for " .. filename)
+    return nil
+  end
+  -- Check the operating system and get file creation time
+  ---@diagnostic disable-next-line: undefined-field
+  local os_name = vim.uv.os_uname().sysname:lower()
+  local time
+  if os_name == "windows" then
+    -- Windows: Use ctime as it represents creation time
+    time = stat.ctime.sec
+  elseif os_name == "darwin" then
+    -- macOS: Use birthtime if available, otherwise fall back to ctime
+    time = (stat.birthtime and stat.birthtime.sec ~= 0) and stat.birthtime.sec or stat.ctime.sec
+  else
+    -- Linux and others: Use the earliest of mtime, ctime, and atime
+    -- as birthtime is not reliably supported
+    time = math.min(stat.mtime.sec, stat.ctime.sec, stat.atime.sec)
+  end
+
+  -- Return the formatted timestamp
+  if time then
+    return tostring(os.date("%Y%m%dT%H%M%S", time))
+  end
+end
+
+
+--- GENERATORS
 ---@param options table
 ---@param title string
 ---@param keywords string
@@ -58,8 +121,8 @@ function M.note(options, title, keywords)
   local og_title = title
   keywords = M.format_denote_string(keywords, "_")
   title = M.format_denote_string(title, "-")
-  local file = options.dir .. os.date("%Y%m%dT%H%M%S")
-  file = file .. title .. keywords .. "." .. options.ext
+  local file = options.directory .. os.date("%Y%m%dT%H%M%S")
+  file = file .. title .. keywords .. "." .. options.filetype
   vim.cmd("edit " .. file)
   if options.add_heading and og_title ~= "" then
     M.set_heading(options, og_title)
@@ -79,8 +142,12 @@ function M.title(options, filename, title)
   end
   local sig = filename:match(".-(==[^%-%_%.]*)")
   local keywords = filename:match(".-(__.*)%..*")
-  if not keywords then keywords = "" end
-  if not sig then sig = "" end
+  if not keywords then
+    keywords = ""
+  end
+  if not sig then
+    sig = ""
+  end
   title = M.trim(title)
   if options.retitle_heading then
     M.set_heading(options, title)
@@ -131,5 +198,26 @@ function M.extension(filename, ext)
   local new_filename = prefix .. ext
   M.replace_file(filename, new_filename)
 end
+
+
+--- PARSERS
+---@param filename string
+---@return table components
+function M.parse_filename(filename, split)
+  split = split or false
+  local components = {}
+  for name, pattern in pairs(patterns) do
+    for match in string.gmatch(filename, pattern) do
+      if vim.tbl_contains(vim.tbl_keys(separators), name) and split then
+        components[name] = vim.split(match, separators[name])
+      else
+        components[name] = match
+      end
+    end
+  end
+  return components
+end
+
+
 
 return M
