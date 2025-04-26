@@ -27,7 +27,7 @@ local defaults = {
   heading_char = "auto",
   integrations = {
     oil = false,
-    telescope = { enabled = true, {} },
+    telescope = { enabled = true, opts = {} },
   },
 }
 

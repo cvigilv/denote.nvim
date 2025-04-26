@@ -86,7 +86,7 @@ M.setup = function(opts)
     local files = vim.fn.glob(options.directory .. "*", false, true)
 
     pickers
-      .new({
+      .new(tele_opts, {
         prompt_title = "Find Denote Files",
         finder = finders.new_table({
           results = files,
@@ -101,7 +101,7 @@ M.setup = function(opts)
         }),
         sorter = conf.file_sorter({}),
         previewer = conf.file_previewer({}),
-      }, tele_opts)
+      })
       :find()
   end
 end
