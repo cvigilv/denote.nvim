@@ -20,8 +20,8 @@ M.setup = function(options)
       api.signature()
     elseif opts.fargs[1] == "extension" then
       api.extension()
-    elseif opts.fargs[1] == "rename" then
-      api.rename()
+    elseif opts.fargs[1] == "rename-file" then
+      api.rename_file()
     ---@diagnostic disable-next-line: need-check-nil
     elseif opts.fargs[1] == "search" and options.integrations.telescope.enabled then
       require("denote.integrations.telescope").search(options)
@@ -38,7 +38,7 @@ M.setup = function(options)
         "keywords",
         "signature",
         "extension",
-        "rename",
+        "rename-file",
       }
 
       -- Integrationg
