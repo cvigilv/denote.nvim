@@ -96,7 +96,7 @@ end
 ---@param signature string?
 ---@param keywords string?
 ---@param extension string?
-function M.rename(filename, date, title, signature, keywords, extension)
+function M.rename_file(filename, date, title, signature, keywords, extension)
   -- Parse filename to get current components
   filename = filename or vim.fn.expand("%:p")
   local components = I.parse_filename(filename, false)
