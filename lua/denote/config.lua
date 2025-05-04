@@ -13,12 +13,14 @@
 ---@class Denote.Configuration
 ---@field filetype string? Default note file type
 ---@field directory string? Denote files directory
+---@field prompts string[]? File creation/renaming prompt order
 ---@field integrations Denote.Integrations.Configuration? Extensions configuration
 
 --@type Denote.Configuration
 local defaults = {
   filetype = "md",
   directory = "~/notes/",
+  prompts = {"date", "title", "keywords" }, -- "date", "title", "keywords", "signature"
   integrations = {
     oil = false,
     telescope = false
@@ -58,6 +60,7 @@ M.update_config = function(opts)
   vim.validate({
     ["filetype"] = { opts.filetype, "string" },
     ["directory"] = { opts.directory, "string" },
+    ["prompts"] = { opts.prompts, "table" },
     ["integrations.oil"] = { opts.integrations.oil, "boolean" },
     ["integrations.telescope"] = { opts.integrations.telescope, "table" },
   })

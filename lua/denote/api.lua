@@ -3,8 +3,10 @@
 ---@license MIT 2025
 
 local I = require("denote.internal")
+local prompt = require("denote.helpers.prompts")
 
 local M = {}
+
 ---@param options table
 ---@param title string|nil
 ---@param keywords string|nil
@@ -97,28 +99,28 @@ end
 ---@param keywords string?
 ---@param extension string?
 function M.rename_file(filename, date, title, signature, keywords, extension)
-  -- Parse filename to get current components
+  -- Parse filename to get current fields
   filename = filename or vim.fn.expand("%:p")
-  local components = I.parse_filename(filename, false)
+  local fields = I.parse_filename(filename, false)
 
   -- Get/generate timestamp and ask for title, signature, keywords, and extension
   -- TODO: Move to vim.ui.input eventually, since it's the new standard and is more UX friendly
-  if components.date == nil then
+  if fields.date == nil then
     date = I.generate_timestamp(filename)
   else
-    date = components.date
+    date = fields.date
   end
   if not title then
-    title = vim.fn.input("[denote.nvim] Title: ", components.title or "")
+    title = prompt.title(filename)
   end
   if not signature then
-    signature = vim.fn.input("[denote.nvim] Signature: ", components.signature or "")
+    title = prompt.title(filename)
   end
   if not keywords then
-    keywords = vim.fn.input("[denote.nvim] Keywords: ", components.keywords or "")
+    keywords = prompt.keywords(filename)
   end
   if not extension then
-    extension = vim.fn.input("[denote.nvim] Extension: ", components.extension or "")
+    extension = prompt.extension(filename)
   end
 
   -- Generate new filename
@@ -134,6 +136,5 @@ function M.rename_file(filename, date, title, signature, keywords, extension)
     vim.fs.normalize(vim.fs.dirname(vim.fs.abspath(filename)) .. "/" .. new_filename)
   )
 end
-
 
 return M
