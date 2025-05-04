@@ -34,13 +34,9 @@ Example config via [lazy.nvim](https://github.com/folke/lazy.nvim)
   opts = {
     ext = "md",             -- Note file extension (e.g. md, org, norg, txt)
     dir = "~/notes",        -- Notes directory (should already exist)
-    add_heading = true,     -- Add a md/org heading to new notes
-    retitle_heading = true, -- Replace the first line heading when retitling
   },
 },
 ```
-
-The heading options automatically support Markdown (#) and Org/Norg (*) headings.
 
 ## Keymaps
 
@@ -70,8 +66,6 @@ Add the following to `~/.config/nvim/init.lua`
 require("denote").setup({
   ext = "md",
   dir = "~/notes",
-  add_heading = true,
-  retitle_heading = true,
 })
 ```
 
@@ -83,7 +77,6 @@ require("denote").setup({
 :Denote note
 
 " Renames the current note with the new title
-" If `retitle_heading` is true, overwrites the first line heading as well
 :Denote title
 
 " Renames the current note with the new list of keywords (space delimited)

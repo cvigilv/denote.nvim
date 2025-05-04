@@ -13,18 +13,12 @@
 ---@class Denote.Configuration
 ---@field filetype string? Default note file type
 ---@field directory string? Denote files directory
----@field add_heading boolean?
----@field retitle_heading boolean?
----@field heading_char string?
 ---@field integrations Denote.Integrations.Configuration? Extensions configuration
 
 --@type Denote.Configuration
 local defaults = {
   filetype = "md",
   directory = "~/notes/",
-  add_heading = true,
-  retitle_heading = true,
-  heading_char = "auto",
   integrations = {
     oil = false,
     telescope = false
@@ -38,15 +32,6 @@ local function update_auto_options(opts)
   -- Add trailing "/" to notes directory
   if opts.directory:sub(-1) ~= "/" then
     opts["directory"] = opts.directory .. "/"
-  end
-
-  -- Define heading characters for supported filetypes
-  if opts.heading_char == "auto" then
-    if opts.filetype == "markdown" then
-      opts.heading_char = "#"
-    elseif opts.filetype == "org" or opts.filetype == "norg" then
-      opts.heading_char = "*"
-    end
   end
 
   if type(opts.integrations.telescope) == "boolean" then
@@ -73,9 +58,6 @@ M.update_config = function(opts)
   vim.validate({
     ["filetype"] = { opts.filetype, "string" },
     ["directory"] = { opts.directory, "string" },
-    ["add_heading"] = { opts.add_heading, "boolean" },
-    ["retitle_heading"] = { opts.add_heading, "boolean" },
-    ["heading_char"] = { opts.heading_char, "string" },
     ["integrations.oil"] = { opts.integrations.oil, "boolean" },
     ["integrations.telescope"] = { opts.integrations.telescope, "table" },
   })
