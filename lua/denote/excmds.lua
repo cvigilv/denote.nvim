@@ -11,9 +11,9 @@ local M = {}
 M.setup = function(options)
   vim.api.nvim_create_user_command("Denote", function(opts)
     if opts.fargs[1] == "note" then
-      api.note(options --[[@as table]])
+      api.note(options)
     elseif opts.fargs[1] == "title" then
-      api.title(options --[[@as table]])
+      api.title()
     elseif opts.fargs[1] == "keywords" then
       api.keywords()
     elseif opts.fargs[1] == "signature" then
@@ -21,7 +21,7 @@ M.setup = function(options)
     elseif opts.fargs[1] == "extension" then
       api.extension()
     elseif opts.fargs[1] == "rename-file" then
-      api.rename_file()
+      api.rename_file(options)
     ---@diagnostic disable-next-line: need-check-nil
     elseif opts.fargs[1] == "search" and options.integrations.telescope.enabled then
       require("denote.integrations.telescope").search(options)

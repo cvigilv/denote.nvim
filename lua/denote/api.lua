@@ -3,124 +3,95 @@
 ---@license MIT 2025
 
 local I = require("denote.internal")
-local prompt = require("denote.helpers.prompts")
+local Prompts = require("denote.helpers.prompts")
 
 local M = {}
 
----@param options table
----@param title string|nil
----@param keywords string|nil
-function M.note(options, title, keywords)
-  if not title then
-    vim.ui.input({ prompt = "Note title: " }, function(input)
-      title = input
-    end)
+-- Create a new note interactively
+---@param opts Denote.Configuration
+function M.note(opts)
+  -- Define base fields
+  local fields = {
+    date = I.generate_timestamp(),
+    extension = I.FILETYPE_TO_EXTENSION[opts.filetype]
+  }
+  -- Prompt user for fields defined in `opts.prompts`
+  for _, field in ipairs(opts.prompts) do
+    fields[field] = Prompts[field]()
   end
-  if not keywords then
-    vim.ui.input({ prompt = "Keywords: " }, function(input)
-      keywords = input
-    end)
-  end
-  if not title or not keywords then
-    return
-  end
-  I.note(options, title, keywords)
+  -- Create new note
+  I.new_note(fields, opts)
 end
 
----@param options table
----@param filename string|nil
----@param title string|nil
-function M.title(options, filename, title)
-  if not filename then
-    filename = vim.fn.expand("%")
-  end
-  if not title then
-    vim.ui.input({ prompt = "New title: " }, function(input)
-      title = input
-    end)
-  end
-  if not title then
-    return
-  end
-  I.title(options, filename, title)
+-- Update title of file
+---@param filename string? File to update
+---@param title string? New title
+function M.title( filename, title)
+  filename = filename or vim.fn.expand("%:p")
+  title = title or Prompts.title(filename)
+  I.update_title(filename, title)
 end
 
----@param filename string|nil
----@param keywords string|nil
-function M.keywords(filename, keywords)
-  if not filename then
-    filename = vim.fn.expand("%")
-  end
-  if not keywords then
-    vim.ui.input({ prompt = "New keywords: " }, function(input)
-      keywords = input
-    end)
-  end
-  if not keywords then
-    return
-  end
-  I.keyword(filename, keywords)
+-- Update signature of file
+---@param filename string? File to update
+---@param signature string? New signature
+function M.signature( filename, signature)
+  filename = filename or vim.fn.expand("%:p")
+  signature = signature or Prompts.signature(filename)
+  I.update_signature(filename, signature)
 end
 
----@param filename string|nil
----@param sig string|nil
-function M.signature(filename, sig)
-  filename = filename or vim.fn.expand("%")
-  if not sig then
-    vim.ui.input({ prompt = "Signature: " }, function(input)
-      sig = input
-    end)
-  end
-  if not sig then
-    return
-  end
-  I.signature(filename, sig)
+-- Update keywords of file
+---@param filename string? File to update
+---@param keywords string? New keywords
+function M.keywords( filename, keywords)
+  filename = filename or vim.fn.expand("%:p")
+  keywords = keywords or Prompts.keywords(filename)
+  I.update_keyword(filename, keywords)
 end
 
----@param filename string|nil
----@param ext string|nil
-function M.extension(filename, ext)
-  filename = filename or vim.fn.expand("%")
-  if not ext then
-    vim.ui.input({ prompt = "Extension: " }, function(input)
-      ext = input
-    end)
-  end
-  if not ext then
-    return
-  end
-  I.extension(filename, ext)
+-- Update extension of file
+---@param filename string? File to update
+---@param extension string? New extension
+function M.extension(filename, extension)
+  filename = filename or vim.fn.expand("%:p")
+  extension = extension or Prompts.extension(filename)
+  I.update_extension(filename, extension)
 end
 
---- Rename file into a Denote compliant format
----@param filename string?
----@param title string?
----@param signature string?
----@param keywords string?
----@param extension string?
-function M.rename_file(filename, date, title, signature, keywords, extension)
+---Rename file into a Denote compliant format. If no arguments are passed, it runs interactively.
+---@param opts Denote.Configuration
+---@param filename string? File to rename, defaults to current file.
+---@param title string? New title
+---@param signature string? New signature
+---@param keywords string? New keywords
+---@param extension string? New extension
+---@return boolean status Whether the rename process was succesfully executed
+function M.rename_file(opts, filename, date, title, signature, keywords, extension)
   -- Parse filename to get current fields
   filename = filename or vim.fn.expand("%:p")
   local fields = I.parse_filename(filename, false)
+  if not fields then
+    error("[denote.nvim] Doesn't look like a Denote file", 4)
+    return false
+  end
 
-  -- Get/generate timestamp and ask for title, signature, keywords, and extension
-  -- TODO: Move to vim.ui.input eventually, since it's the new standard and is more UX friendly
-  if fields.date == nil then
-    date = I.generate_timestamp(filename)
-  else
-    date = fields.date
+  -- Prompt user for fields defined in `opts.prompts`
+  for _, field in ipairs(opts.prompts) do
+    fields[field] = Prompts[field]()
   end
-  if not title then
-    title = prompt.title(filename)
-  end
-  if not signature then
-    title = prompt.title(filename)
-  end
-  if not keywords then
-    keywords = prompt.keywords(filename)
-  end
-  if not extension then
-    extension = prompt.extension(filename)
+
+  -- Load fields
+  date = date or fields["date"] or ""
+  title = title or fields["title"] or ""
+  keywords = keywords or fields["keywords"] or ""
+  signature = signature or fields["signature"] or ""
+  extension = extension or fields["extension"] or ""
+
+  -- Check if date is in Denote's format
+  if not date:match(I.PATTERNS.date) then
+    error("[denote.nvim] Doesn't look like a denote file", 4)
+    return false
   end
 
   -- Generate new filename
@@ -135,6 +106,8 @@ function M.rename_file(filename, date, title, signature, keywords, extension)
     filename,
     vim.fs.normalize(vim.fs.dirname(vim.fs.abspath(filename)) .. "/" .. new_filename)
   )
+
+  return true
 end
 
 return M

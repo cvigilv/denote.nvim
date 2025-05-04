@@ -20,10 +20,10 @@
 local defaults = {
   filetype = "md",
   directory = "~/notes/",
-  prompts = {"date", "title", "keywords" }, -- "date", "title", "keywords", "signature"
+  prompts = { "title", "keywords" }, -- "date", "title", "keywords", "signature", "extension"
   integrations = {
     oil = false,
-    telescope = false
+    telescope = false,
   },
 }
 
