@@ -52,22 +52,6 @@ function M.format_denote_string(str, char)
   return str
 end
 
----@param title string heading text
----Set the first line to title if it's an empty buffer or the first line is a heading
-function M.set_heading(options, title)
-  if title == "" then
-    return
-  end
-  local first_char = vim.api.nvim_buf_get_lines(0, 0, 1, false)[1]:sub(1, 1)
-  if first_char == "" or first_char == options.heading_char then
-    local prefix = options.heading_char
-    if prefix ~= "" then
-      prefix = prefix .. " "
-    end
-    vim.api.nvim_buf_set_lines(0, 0, 1, false, { prefix .. title })
-  end
-end
-
 ---@param new_filename string
 ---@param old_filename string
 ---Save new file, delete old file
@@ -124,17 +108,13 @@ function M.note(options, title, keywords)
   local file = options.directory .. os.date("%Y%m%dT%H%M%S")
   file = file .. title .. keywords .. "." .. options.filetype
   vim.cmd("edit " .. file)
-  if options.add_heading and og_title ~= "" then
-    M.set_heading(options, og_title)
-    vim.cmd("norm! 2o")
-  end
   vim.cmd("startinsert")
 end
 
 ---@param options table
 ---@param filename string
 ---@param title string
---- Retitles the filename and changes the first heading of the note
+--- Retitles the filename
 function M.title(options, filename, title)
   local prefix, ext = filename:match("^(.-%d%d%d%d%d%d%d%dT%d%d%d%d%d%d).*(%..+)")
   if not prefix then
@@ -149,9 +129,6 @@ function M.title(options, filename, title)
     sig = ""
   end
   title = M.trim(title)
-  if options.retitle_heading then
-    M.set_heading(options, title)
-  end
   title = M.format_denote_string(title, "-")
   local new_filename = prefix .. sig .. title .. keywords .. ext
   M.replace_file(filename, new_filename)
