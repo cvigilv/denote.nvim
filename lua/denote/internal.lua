@@ -4,19 +4,26 @@
 
 local M = {}
 
-local patterns = {
+M.PATTERNS = {
   date = "(%d%d%d%d%d%d%d%dT%d%d%d%d%d%d)",
   signature = "==([a-zA-Z0-9=]+)",
   title = "%-%-([a-z0-9%-]+)",
   keywords = "__([a-z0-9_]+)",
   extension = "(%.[^%s%.]+)",
 }
-local separators = {
-  date = nil,
+M.SEPARATORS = {
+  date = "@",
   signature = "=",
   title = "-",
   keywords = "_",
-  extension = nil,
+  extension = ".",
+}
+M.FILETYPE_TO_EXTENSION = {
+  org = ".org",
+  neorg = ".norg",
+  ["markdown-yaml"] = ".md",
+  ["markdown-toml"] = ".md",
+  text = ".txt",
 }
 
 --- UTILS
@@ -44,6 +51,7 @@ end
 ---@param char string delimiter that replaces spaces (- for titles, _ for keywords, = for sigs)
 ---Format the title/keywords/sig string of a Denote filename
 function M.format_denote_string(str, char)
+  str = M.trim(str)
   str = M.plain_format(str)
   if str == "" then
     return ""
@@ -62,30 +70,35 @@ function M.replace_file(old_filename, new_filename)
   end
 end
 
----Generates a timestamp for a given file based on its creation or modification time.
----@param filename string The path to the file
+---Generates a timestamp for a given file based on its creation or modification time. If no file is provided, generate for current time
+---@param filename string? The path to the file
 ---@return string|nil Denote formatted timestamp or nil if an error occurs
 function M.generate_timestamp(filename)
-  ---@diagnostic disable-next-line: undefined-field
-  local stat = vim.uv.fs_stat(vim.fs.abspath(filename))
-  if not stat then
-    error("Error: Unable to get file stats for " .. filename)
-    return nil
-  end
-  -- Check the operating system and get file creation time
-  ---@diagnostic disable-next-line: undefined-field
-  local os_name = vim.uv.os_uname().sysname:lower()
   local time
-  if os_name == "windows" then
-    -- Windows: Use ctime as it represents creation time
-    time = stat.ctime.sec
-  elseif os_name == "darwin" then
-    -- macOS: Use birthtime if available, otherwise fall back to ctime
-    time = (stat.birthtime and stat.birthtime.sec ~= 0) and stat.birthtime.sec or stat.ctime.sec
+  if filename then
+    ---@diagnostic disable-next-line: undefined-field
+    local stat = vim.uv.fs_stat(vim.fs.abspath(filename))
+    if not stat then
+      error("Error: Unable to get file stats for " .. filename)
+      return nil
+    end
+    -- Check the operating system and get file creation time
+    ---@diagnostic disable-next-line: undefined-field
+    local os_name = vim.uv.os_uname().sysname:lower()
+    if os_name == "windows" then
+      -- Windows: Use ctime as it represents creation time
+      time = stat.ctime.sec
+    elseif os_name == "darwin" then
+      -- macOS: Use birthtime if available, otherwise fall back to ctime
+      time = (stat.birthtime and stat.birthtime.sec ~= 0) and stat.birthtime.sec
+        or stat.ctime.sec
+    else
+      -- Linux and others: Use the earliest of mtime, ctime, and atime
+      -- as birthtime is not reliably supported
+      time = math.min(stat.mtime.sec, stat.ctime.sec, stat.atime.sec)
+    end
   else
-    -- Linux and others: Use the earliest of mtime, ctime, and atime
-    -- as birthtime is not reliably supported
-    time = math.min(stat.mtime.sec, stat.ctime.sec, stat.atime.sec)
+    time = os.time()
   end
 
   -- Return the formatted timestamp
@@ -93,7 +106,6 @@ function M.generate_timestamp(filename)
     return tostring(os.date("%Y%m%dT%H%M%S", time))
   end
 end
-
 
 --- GENERATORS
 ---@param options table
@@ -111,11 +123,38 @@ function M.note(options, title, keywords)
   vim.cmd("startinsert")
 end
 
----@param options table
+---@param fields table
+---@param options Denote.Configuration
+---Edit a new note with a Denote filename
+function M.new_note(fields, options)
+  -- Load fields
+  local date = fields["date"] or ""
+  local title = fields["title"] or ""
+  local keywords = fields["keywords"] or ""
+  local signature = fields["signature"] or ""
+  local extension = fields["extension"] or ""
+
+  -- Check if date is in Denote's format
+  if not date:match(M.PATTERNS.date) then
+    return nil
+  end
+
+  -- Create note with provided fields
+  local filename = options.directory
+    .. date
+    .. M.format_denote_string(signature --[[@as string]], "=")
+    .. M.format_denote_string(title --[[@as string]], "-")
+    .. M.format_denote_string(keywords --[[@as string]], "_")
+    .. extension
+
+  vim.cmd("edit " .. filename)
+  vim.cmd("startinsert")
+end
+
 ---@param filename string
 ---@param title string
 --- Retitles the filename
-function M.title(options, filename, title)
+function M.update_title(filename, title)
   local prefix, ext = filename:match("^(.-%d%d%d%d%d%d%d%dT%d%d%d%d%d%d).*(%..+)")
   if not prefix then
     error("This doesn't look like a Denote filename")
@@ -137,7 +176,7 @@ end
 ---@param filename string
 ---@param keywords string
 ---Replaces the __keywords in filename
-function M.keyword(filename, keywords)
+function M.update_keyword(filename, keywords)
   local prefix, ext = filename:match("^(.*)__.*(%..+)$")
   if not prefix then
     prefix, ext = filename:match("^(.*)(%..+)$")
@@ -151,23 +190,23 @@ function M.keyword(filename, keywords)
 end
 
 ---@param filename string
----@param sig string
+---@param signature string
 ---Add/change the ==signature in the filename
-function M.signature(filename, sig)
+function M.update_signature(filename, signature)
   local prefix, suffix = filename:match("^(.-%d%d%d%d%d%d%d%dT%d%d%d%d%d%d)(.*)")
   if not prefix then
     error("This doesn't look like a Denote filename")
   end
   suffix = suffix:gsub("==[^%-%_%.]*", "")
-  sig = M.format_denote_string(sig, "=")
-  local new_filename = prefix .. sig .. suffix
+  signature = M.format_denote_string(signature, "=")
+  local new_filename = prefix .. signature .. suffix
   M.replace_file(filename, new_filename)
 end
 
 ---@param filename string
 ---@param ext string
 ---Replace the extension in the file with ext
-function M.extension(filename, ext)
+function M.update_extension(filename, ext)
   local prefix, _ = filename:match("^(.-%d%d%d%d%d%d%d%dT%d%d%d%d%d%d.*%.)(.+)$")
   if not prefix then
     error("This doesn't look like a Denote file")
@@ -176,17 +215,17 @@ function M.extension(filename, ext)
   M.replace_file(filename, new_filename)
 end
 
-
 --- PARSERS
+--- TODO: Add early return based on if it has timestamp in filename
 ---@param filename string
 ---@return table components
 function M.parse_filename(filename, split)
   split = split or false
   local components = {}
-  for name, pattern in pairs(patterns) do
+  for name, pattern in pairs(M.PATTERNS) do
     for match in string.gmatch(filename, pattern) do
-      if vim.tbl_contains(vim.tbl_keys(separators), name) and split then
-        components[name] = vim.split(match, separators[name])
+      if vim.tbl_contains(vim.tbl_keys(M.SEPARATORS), name) and split then
+        components[name] = vim.split(match, M.SEPARATORS[name])
       else
         components[name] = match
       end
@@ -194,7 +233,5 @@ function M.parse_filename(filename, split)
   end
   return components
 end
-
-
 
 return M
