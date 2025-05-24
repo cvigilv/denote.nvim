@@ -9,7 +9,7 @@ local function _prompt_factory(filename, field)
   local fields = U.parse_filename(filename, false)
   local v
   vim.ui.input({
-    prompt = string.format("[denote.nvim] %s: ", field),
+    prompt = string.format("[denote] New %s: ", field),
     default = string.gsub(fields[field] or "", "%" .. U.SEPARATORS[field], " "),
   }, function(e)
     v = U.trim(e)

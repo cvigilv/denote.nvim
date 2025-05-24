@@ -13,7 +13,7 @@ function M.note(opts)
   -- Define base fields
   local fields = {
     date = I.generate_timestamp(),
-    extension = I.FILETYPE_TO_EXTENSION[opts.filetype]
+    extension = I.FILETYPE_TO_EXTENSION[opts.filetype],
   }
   -- Prompt user for fields defined in `opts.prompts`
   for _, field in ipairs(opts.prompts) do
@@ -26,7 +26,7 @@ end
 -- Update title of file
 ---@param filename string? File to update
 ---@param title string? New title
-function M.title( filename, title)
+function M.title(filename, title)
   filename = filename or vim.fn.expand("%:p")
   title = title or Prompts.title(filename)
   I.update_title(filename, title)
@@ -35,7 +35,7 @@ end
 -- Update signature of file
 ---@param filename string? File to update
 ---@param signature string? New signature
-function M.signature( filename, signature)
+function M.signature(filename, signature)
   filename = filename or vim.fn.expand("%:p")
   signature = signature or Prompts.signature(filename)
   I.update_signature(filename, signature)
@@ -44,7 +44,7 @@ end
 -- Update keywords of file
 ---@param filename string? File to update
 ---@param keywords string? New keywords
-function M.keywords( filename, keywords)
+function M.keywords(filename, keywords)
   filename = filename or vim.fn.expand("%:p")
   keywords = keywords or Prompts.keywords(filename)
   I.update_keyword(filename, keywords)
@@ -72,7 +72,7 @@ function M.rename_file(opts, filename, date, title, signature, keywords, extensi
   filename = filename or vim.fn.expand("%:p")
   local fields = I.parse_filename(filename, false)
   if not fields then
-    error("[denote.nvim] Doesn't look like a Denote file", 4)
+    error("[denote] Doesn't look like a Denote file", 4)
     return false
   end
 
@@ -90,7 +90,7 @@ function M.rename_file(opts, filename, date, title, signature, keywords, extensi
 
   -- Check if date is in Denote's format
   if not date:match(I.PATTERNS.date) then
-    error("[denote.nvim] Doesn't look like a denote file", 4)
+    error("[denote] Doesn't look like a denote file", 4)
     return false
   end
 
