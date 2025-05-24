@@ -66,7 +66,7 @@ end
 function M.replace_file(old_filename, new_filename)
   if old_filename ~= new_filename then
     vim.cmd("saveas " .. new_filename)
-    vim.cmd("silent !rm " .. old_filename)
+    vim.cmd(string.format('silent !rm "%s"', old_filename))
   end
 end
 
