@@ -25,6 +25,8 @@ M.setup = function(options)
     ---@diagnostic disable-next-line: need-check-nil
     elseif opts.fargs[1] == "search" and options.integrations.telescope.enabled then
       require("denote.integrations.telescope").search(options)
+    elseif opts.fargs[1] == "insert-link" and options.integrations.telescope.enabled then
+      require("denote.integrations.telescope").insert_link(options)
     else
       error("Unsupported operation " .. opts.fargs[1])
     end
@@ -39,6 +41,7 @@ M.setup = function(options)
         "signature",
         "extension",
         "rename-file",
+        "insert-link",
       }
 
       -- Integrationg
