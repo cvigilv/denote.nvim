@@ -113,4 +113,24 @@ function M.rename_file(opts, filename, identifier, title, signature, keywords, e
   return true
 end
 
+---Populate a quickfix buffer with all files found in the Denote directory.
+---@param opts Denote.Configuration
+function M.search(opts)
+  opts = opts or _G.denote.config
+  local files = vim.split(vim.fn.globpath(opts.directory, "*"), "\n")
+  local items = {}
+  for _, path in ipairs(files) do
+    table.insert(items, {
+      filename = path,
+      lnum = 1,
+      col = 1,
+      text = vim.fs.basename(path),
+    })
+  end
+  vim.fn.setqflist(items)
+  vim.cmd("copen")
+  if vim.fn.exists(":Cfilter") ~= 2 then
+    print("[denote] `Cfilter` not loaded, we recommend adding it for a better experience")
+  end
+end
 return M

@@ -23,8 +23,12 @@ M.setup = function(options)
     elseif opts.fargs[1] == "rename-file" then
       api.rename_file(options)
     ---@diagnostic disable-next-line: need-check-nil
-    elseif opts.fargs[1] == "search" and options.integrations.telescope.enabled then
-      require("denote.integrations.telescope").search(options)
+    elseif opts.fargs[1] == "search" then
+      if options.integrations.telescope.enabled then
+        require("denote.integrations.telescope").search(options)
+      else
+        api.search(opts)
+      end
     elseif opts.fargs[1] == "insert-link" and options.integrations.telescope.enabled then
       require("denote.integrations.telescope").insert_link(options, true)
     elseif opts.fargs[1] == "link" and options.integrations.telescope.enabled then
