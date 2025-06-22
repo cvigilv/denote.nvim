@@ -23,7 +23,7 @@ function M.signature(filename)
   return _prompt_factory(filename, "signature")
 end
 function M.date(filename)
-  return _prompt_factory(filename, "date")
+  return _prompt_factory(filename, "identifier")
 end
 function M.keywords(filename)
   return _prompt_factory(filename, "keywords")

@@ -26,7 +26,9 @@ M.setup = function(options)
     elseif opts.fargs[1] == "search" and options.integrations.telescope.enabled then
       require("denote.integrations.telescope").search(options)
     elseif opts.fargs[1] == "insert-link" and options.integrations.telescope.enabled then
-      require("denote.integrations.telescope").insert_link(options)
+      require("denote.integrations.telescope").insert_link(options, true)
+    elseif opts.fargs[1] == "link" and options.integrations.telescope.enabled then
+      require("denote.integrations.telescope").insert_link(options, false)
     else
       error("Unsupported operation " .. opts.fargs[1])
     end

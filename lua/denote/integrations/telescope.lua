@@ -4,10 +4,10 @@
 
 local Internal = require("denote.internal")
 
-local function format_entry(text)
+local function format_entry(filename)
   -- Define patterns
   local patterns = {
-    date = "(%d%d%d%d%d%d%d%dT%d%d%d%d%d%d)",
+    identifier = "(%d%d%d%d%d%d%d%dT%d%d%d%d%d%d)",
     signature = "==([a-zA-Z0-9=]+)",
     title = "%-%-([a-z0-9%-]+)",
     keywords = "__([a-z0-9_]+)",
@@ -19,14 +19,14 @@ local function format_entry(text)
 
   -- Find all matches for each pattern
   for name, pattern in pairs(patterns) do
-    for match in string.gmatch(text, pattern) do
+    for match in string.gmatch(filename, pattern) do
       results[name] = match
     end
   end
 
   -- Check if format complies with denote file format
-  results["filename"] = text
-  if results.date then
+  results["filename"] = filename
+  if results.identifier then
     results["filename"] = ""
   end
 
@@ -77,7 +77,7 @@ M.setup = function(opts)
       })
 
       return displayer({
-        { components.date or "", "DenoteDate" },
+        { components.identifier or "", "DenoteDate" },
         { components.signature or "", "DenoteSignature" },
         { components.title or "", "DenoteTitle" },
         { components.keywords or "", "DenoteKeyword" },
@@ -107,7 +107,7 @@ M.setup = function(opts)
       })
       :find()
   end
-  M.insert_link = function(options)
+  M.insert_link = function(options, interactive)
     ---@type Denote.Configuration
     local tele_opts = options.integrations.telescope.opts
 
@@ -128,7 +128,7 @@ M.setup = function(opts)
       })
 
       return displayer({
-        { components.date or "", "DenoteDate" },
+        { components.identifier or "", "DenoteDate" },
         { components.signature or "", "DenoteSignature" },
         { components.title or "", "DenoteTitle" },
         { components.keywords or "", "DenoteKeyword" },
@@ -159,40 +159,141 @@ M.setup = function(opts)
         attach_mappings = function(prompt_bufnr, _)
           -- Register the action without binding it to a key
           actions.select_default:replace(function()
-            local selection = action_state.get_selected_entry()
+            -- -- Get selected entries
+            -- local picker = action_state.get_current_picker(prompt_bufnr)
+            -- local multi_selection = picker:get_multi_selection()
+            -- local entries = {}
+            -- if #multi_selection > 0 then
+            --   entries = multi_selection
+            -- else
+            --   local current_entry = action_state.get_selected_entry()
+            --   if current_entry then
+            --     table.insert(entries, current_entry)
+            --   end
+            -- end
+            --
+            -- -- Close picker if no entries are selected
+            -- actions.close(prompt_bufnr)
+            -- if #entries == 0 then
+            --   return
+            -- end
+            --
+            -- -- Process links
+            -- if #entries == 1 then -- Run interactively
+            --   local entry = entries[1]
+            --
+            --   -- Extract link details based on your data structure
+            --   local link_description = (interactive and vim.fn.input({
+            --     prompt = "[denote] Link description: ",
+            --     default = Internal.parse_filename(entry.path, false)["title"]
+            --       :gsub("-", " "),
+            --   })) or Internal.parse_filename(entry.path)["identifier"]
+            --   local link_path = vim.fs.relpath(
+            --     vim.fs.normalize(vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":p:h")),
+            --     vim.fs.normalize(entry.path)
+            --   )
+            --
+            --   -- Create the markdown link
+            --   local filetype = vim.bo[bufnr].filetype
+            --   local link
+            --   if string.match(filetype, "markdown") then
+            --     link = string.format("[%s](%s)", link_description, link_path)
+            --   elseif string.match(filetype, "neorg") then
+            --     link = string.format("{%s:%s:}", link_description, link_path)
+            --   else
+            --     link = string.format("[[%s][%s]]", link_path, link_description)
+            --   end
+            --
+            --   -- Insert the markdown link at cursor position
+            --   vim.api.nvim_put({ link }, "", true, true)
+            -- else
+            --   local links = {}
+            --   for _, entry in ipairs(entries) do
+            --     -- Create the markdown link
+            --     local filetype = vim.bo[bufnr].filetype
+            --     local path = vim.fs.relpath(
+            --       vim.fs.normalize(vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":p:h")),
+            --       vim.fs.normalize(entry.path)
+            --     )
+            --     local identifier = Internal.parse_filename(entry.path)["identifier"]
+            --     if string.match(filetype, "markdown") then
+            --       table.insert(links, string.format("- [%s](%s)", identifier, path))
+            --     elseif string.match(filetype, "neorg") then
+            --       table.insert(links, string.format("- {%s:%s:}", identifier, path))
+            --     else
+            --       table.insert(links, string.format("- [[file:%s][%s]]", path, identifier))
+            --     end
+            --   end
+            --   vim.api.nvim_put(links, "l", true, true)
+            -- end
 
-            -- Close telescope
+            -- Helper function to calculate relative path
+            local function get_relative_path(entry_path)
+              return vim.fs.relpath(
+                vim.fs.normalize(vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":p:h")),
+                vim.fs.normalize(entry_path)
+              )
+            end
+
+            -- Helper function to format link based on filetype
+            local function format_link(description, path, filetype, is_list_item)
+              local prefix = is_list_item and "- " or ""
+              local link
+
+              if string.match(filetype, "markdown") then
+                link = string.format("[%s](%s)", description, path)
+              elseif string.match(filetype, "neorg") then
+                link = string.format("{%s:%s:}", description, path)
+              else
+                link = string.format("[[file:%s][%s]]", path, description)
+              end
+
+              return prefix .. link
+            end
+
+            -- Get selected entries
+            local picker = action_state.get_current_picker(prompt_bufnr)
+            local multi_selection = picker:get_multi_selection()
+            local entries = {}
+            if #multi_selection > 0 then
+              entries = multi_selection
+            else
+              local current_entry = action_state.get_selected_entry()
+              if current_entry then
+                table.insert(entries, current_entry)
+              end
+            end
+
+            -- Close picker if no entries are selected
             actions.close(prompt_bufnr)
-            if not selection then
+            if #entries == 0 then
               return
             end
 
-
-            -- TODO: Extract this function, add it to the API and accept a list of denote
-            -- files / IDs to insert. In the case its a list, dont make it interactive and extract
-            -- title from header or file path (in that order). If just 1 file, run interactively.
-            -- TODO: Make 2 versions of insert link function: insert-link (which if this one) and
-            -- link (which doesn't add the decription to the link)
-            -- Extract link details based on your data structure
-            local link_description = vim.fn.input({
-              prompt = "[denote] Link description: ",
-              default = Internal.parse_filename(selection.path, false)["title"]:gsub("-", " "),
-            })
-            local link_path = selection.path
-
-            -- Create the markdown link
+            -- Process all entries in a single loop
             local filetype = vim.bo[bufnr].filetype
-            local link
-            if string.match(filetype, "markdown") then
-              link = string.format("[%s](%s)", link_description, link_path)
-            elseif string.match(filetype, "neorg") then
-              link = string.format("{%s:%s:}", link_description, link_path)
-            else
-              link = string.format("[[%s][%s]]", link_path, link_description)
+            local is_multiple = #entries > 1
+            local links = {}
+
+            for _, entry in ipairs(entries) do
+              local path = get_relative_path(entry.path)
+              local description
+
+              if not is_multiple and interactive then
+                description = vim.fn.input({
+                  prompt = "[denote] Link description: ",
+                  default = Internal.parse_filename(entry.path, false)["title"]:gsub("-", " "),
+                })
+              else
+                description = Internal.parse_filename(entry.path)["identifier"]
+              end
+
+              table.insert(links, format_link(description, path, filetype, is_multiple))
             end
 
-            -- Insert the markdown link at cursor position
-            vim.api.nvim_put({ link }, "", true, true)
+            -- Insert links
+            local put_type = is_multiple and "l" or ""
+            vim.api.nvim_put(links, put_type, true, true)
           end)
 
           -- Return true to keep other default mappings

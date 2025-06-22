@@ -5,14 +5,14 @@
 local M = {}
 
 M.PATTERNS = {
-  date = "(%d%d%d%d%d%d%d%dT%d%d%d%d%d%d)",
+  identifier = "(%d%d%d%d%d%d%d%dT%d%d%d%d%d%d)",
   signature = "==([a-zA-Z0-9=]+)",
   title = "%-%-([a-z0-9%-]+)",
   keywords = "__([a-z0-9_]+)",
   extension = "(%.[^%s%.]+)",
 }
 M.SEPARATORS = {
-  date = "@",
+  identifier = "@",
   signature = "=",
   title = "-",
   keywords = "_",
@@ -114,7 +114,6 @@ end
 ---Edit a new note with a Denote filename
 function M.note(options, title, keywords)
   title = M.trim(title)
-  local og_title = title
   keywords = M.format_denote_string(keywords, "_")
   title = M.format_denote_string(title, "-")
   local file = options.directory .. os.date("%Y%m%dT%H%M%S")
@@ -135,7 +134,8 @@ function M.new_note(fields, options)
   local extension = fields["extension"] or ""
 
   -- Check if date is in Denote's format
-  if not date:match(M.PATTERNS.date) then
+  if not date:match(M.PATTERNS.identifier) then
+    error("Can't create a denote file without the date timestamp")
     return nil
   end
 
@@ -220,17 +220,42 @@ end
 ---@param filename string
 ---@return table components
 function M.parse_filename(filename, split)
+  local function __id2date(identifier)
+    local pattern = "(%d%d%d%d)(%d%d)(%d%d)T(%d%d)(%d%d)(%d%d)"
+    local matches = { string.match(identifier, pattern) }
+    if #matches ~= 6 then return nil end
+
+    local timestamp = os.time({
+      year = tonumber(matches[1]) --[[@as number]],
+      month = tonumber(matches[2]) --[[@as number]],
+      day = tonumber(matches[3]) --[[@as number]],
+      hour = tonumber(matches[4]),
+      min = tonumber(matches[5]),
+      sec = tonumber(matches[6]),
+    })
+
+    return "[" .. os.date("%Y-%m-%d %a %T", timestamp) .. "]"
+  end
   split = split or false
-  local components = {}
+  local components = {
+    identifier = "",
+    signature = "",
+    title = "",
+    keywords = "",
+    extension = "",
+  }
   for name, pattern in pairs(M.PATTERNS) do
     for match in string.gmatch(filename, pattern) do
       if vim.tbl_contains(vim.tbl_keys(M.SEPARATORS), name) and split then
-        components[name] = vim.split(match, M.SEPARATORS[name])
+        components[name] = vim.split(match, M.SEPARATORS[name]) --[[@as string]]
       else
         components[name] = match
       end
     end
   end
+  local ok, date = pcall(__id2date,components.identifier)
+  if ok then components.date = date end
+
   return components
 end
 

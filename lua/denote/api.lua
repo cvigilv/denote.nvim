@@ -19,6 +19,7 @@ function M.note(opts)
   for _, field in ipairs(opts.prompts) do
     fields[field] = Prompts[field]()
   end
+  vim.print(fields)
   -- Create new note
   I.new_note(fields, opts)
 end
@@ -67,7 +68,9 @@ end
 ---@param keywords string? New keywords
 ---@param extension string? New extension
 ---@return boolean status Whether the rename process was succesfully executed
-function M.rename_file(opts, filename, date, title, signature, keywords, extension)
+function M.rename_file(opts, filename, identifier, title, signature, keywords, extension)
+  opts = opts or _G.denote.config
+
   -- Parse filename to get current fields
   filename = filename or vim.fn.expand("%:p")
   local fields = I.parse_filename(filename, false)
@@ -82,20 +85,20 @@ function M.rename_file(opts, filename, date, title, signature, keywords, extensi
   end
 
   -- Load fields
-  date = date or fields["date"] or ""
+  identifier = identifier or fields["identifier"] or ""
   title = title or fields["title"] or ""
   keywords = keywords or fields["keywords"] or ""
   signature = signature or fields["signature"] or ""
   extension = extension or fields["extension"] or ""
 
   -- Check if date is in Denote's format
-  if not date:match(I.PATTERNS.date) then
+  if not identifier:match(I.PATTERNS.identifier) then
     error("[denote] Doesn't look like a denote file", 4)
     return false
   end
 
   -- Generate new filename
-  local new_filename = date
+  local new_filename = identifier
     .. I.format_denote_string(signature --[[@as string]], "=")
     .. I.format_denote_string(title --[[@as string]], "-")
     .. I.format_denote_string(keywords --[[@as string]], "_")
