@@ -87,7 +87,7 @@ of the Denote file naming convention. It aims to improve the visual clarity
 and user experience when navigating and managing Denote files through the Oil
 file explorer interface.
 
-To enable, add to your `denote.nvim` configuration the following: >
+To enable, add to your `denote.nvim` configuration the following: >lua
     opts = {
       ...
       integrations = {
@@ -96,7 +96,7 @@ To enable, add to your `denote.nvim` configuration the following: >
     }
 <
 
-The default highlight groups are defined as follows: >
+The default highlight groups are defined as follows: >vim
     hi def link DenoteDate      Number
     hi def link DenoteSignature Special
     hi def link DenoteTitle     Title
@@ -113,10 +113,17 @@ To overwrite or clear this groups, refer to |highlight|.
 This module provides a Telescope integration for the Denote plugin, allowing
 users to search and navigate Denote files using Telescope's interface.
 
+Enabling this integrations will override the default behaviour for the
+following Denote commands:
+
+- `search`
+- `insert-link`
+- `link`
+
 SETUP                                                 *denote-telescope-setup*
 
 To enable this integration, add to your `denote.nvim` configuration the
-following: >
+following: >lua
     opts = {
       ...
       integrations = {
@@ -126,7 +133,7 @@ following: >
 <
 
 This will enable the integration with it's default configuration, which is
-the following: >
+the following: >lua
     opts = {
         ...
         integrations = {
@@ -152,13 +159,15 @@ OPTIONS                                             *denote-telescope-options*
 
 USAGE                                                 *denote-telescope-usage*
 
-After setup, you can use the search function:
->
-    Denote search
-<
-and use the 
+After setup, you can use the following excommands:
+>vim
+    Denote search        " Search file in denote silo
 
-This will open a Telescope picker to search through your Denote files.
+    Denote insert-link   " Insert link to denote file in an interactive manner
+
+    Denote link          " Insert link to denote file in an non-interactive manner
+<
+This will open a Telescope picker to handle this interactions.
 
 DISPLAY FORMAT                                      *denote-telescope-display*
 
@@ -170,10 +179,13 @@ order, for each Denote file:
     3. Title
     4. Keywords
     5. File extension
-    6. Filename (if not in standard Denote format)
+
+As a fallback, the Telescope picker will display just the filename in the case
+the file is non-compliant with the standard Denote format.
 
 Each component is highlighted differently for easy recognition. The default
-highlight groups are defined as follows: >
+highlight groups are defined as follows: 
+>vim
     hi def link DenoteDate      Number
     hi def link DenoteSignature Special
     hi def link DenoteTitle     Title
