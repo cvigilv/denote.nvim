@@ -2,70 +2,137 @@
 ---@author Carlos Vigil-Vásquez
 ---@license MIT 2025
 
----@class Denote.Integrations.Telescope.Configuration
+local log = require("denote.logging")
+local M = {}
+
+---@class Denote.TelescopeConfig
 ---@field enabled boolean
 ---@field opts table?
 
----@class Denote.Integrations.Configuration
----@field oil boolean Activate `stevearc/oil.nvim` extension
----@field telescope boolean|Denote.Integrations.Telescope.Configuration
+---@class Denote.IntegrationsConfig
+---@field oil boolean
+---@field telescope boolean|Denote.TelescopeConfig
 
----@class Denote.Configuration
----@field filetype string? Default note file type
----@field directory string? Denote files directory
----@field prompts string[]? File creation/renaming prompt order
----@field integrations Denote.Integrations.Configuration? Extensions configuration
+---@class Denote.Config
+---@field extension string Default file extension
+---@field directory string Notes directory
+---@field prompts string[] Prompts for note creation
+---@field frontmatter boolean Generate frontmatter
+---@field integrations Denote.IntegrationsConfig
 
---@type Denote.Configuration
+---@type Denote.Config
 local defaults = {
-  filetype = "md",
-  directory = "~/notes/",
-  prompts = { "title", "keywords" }, -- "date", "title", "keywords", "signature", "extension"
-  integrations = {
-    oil = false,
-    telescope = false,
-  },
+	extension = ".md",
+	directory = "~/notes/",
+	prompts = { "title", "keywords" },
+	frontmatter = false,
+	integrations = {
+		oil = false,
+		telescope = false,
+	},
 }
 
----Update configuration based on rules
----@param opts Denote.Configuration User provided configuration table
----@return Denote.Configuration opts Updated default configuration table with user configuration
-local function update_auto_options(opts)
-  -- Add trailing "/" to notes directory
-  if opts.directory:sub(-1) ~= "/" then
-    opts["directory"] = opts.directory .. "/"
-  end
+---Normalize configuration
+---@param config Denote.Config
+---@return Denote.Config
+local function normalize_config(config)
+	log.debug("normalize_config: normalizing config =", config)
 
-  if type(opts.integrations.telescope) == "boolean" then
-    ---@diagnostic disable-next-line: assign-type-mismatch
-    opts.integrations.telescope = { enabled = opts.integrations.telescope, opts = {} }
-  end
+	local original_dir = config.directory
+	if config.directory:sub(-1) ~= "/" then
+		config.directory = config.directory .. "/"
+		log.trace("normalize_config: added trailing slash to directory")
+	end
 
-  return opts
+	config.directory = vim.fn.expand(config.directory)
+	log.trace("normalize_config: expanded directory from", original_dir, "to", config.directory)
+
+	local original_ext = config.extension
+	if not config.extension:match("^%.") then
+		config.extension = "." .. config.extension
+		log.trace("normalize_config: added dot to extension from", original_ext, "to", config.extension)
+	end
+
+	if type(config.integrations.telescope) == "boolean" then
+		local old_value = config.integrations.telescope
+		config.integrations.telescope = {
+			enabled = config.integrations.telescope,
+			opts = {},
+		}
+		log.trace("normalize_config: converted telescope boolean", old_value, "to table", config.integrations.telescope)
+	end
+
+	log.debug("normalize_config: normalized config =", config)
+	return config
 end
 
-local M = {}
+---Validate configuration
+---@param config Denote.Config
+local function validate_config(config)
+	log.debug("validate_config: validating config")
 
----Update defaults with user configuration
----@param opts Denote.Configuration|nil User provided configuration table
----@return Denote.Configuration opts Updated default configuration table with user configuration
-M.update_config = function(opts)
-  -- Merge-in user configuration to default configuration
-  opts = opts and vim.tbl_deep_extend("force", {}, defaults, opts) or defaults
+	local validation_spec = {
+		extension = { config.extension, "string" },
+		directory = { config.directory, "string" },
+		prompts = { config.prompts, "table" },
+		frontmatter = { config.frontmatter, "boolean" },
+		["integrations.oil"] = { config.integrations.oil, "boolean" },
+		["integrations.telescope"] = { config.integrations.telescope, "table" },
+	}
 
-  -- Define automatic options
-  opts = update_auto_options(opts)
+	local success, err = pcall(vim.validate, validation_spec)
+	if not success then
+		log.error("validate_config: validation failed =", err)
+		error("Configuration validation failed: " .. err)
+	end
 
-  -- Validate setup
-  vim.validate({
-    ["filetype"] = { opts.filetype, "string" },
-    ["directory"] = { opts.directory, "string" },
-    ["prompts"] = { opts.prompts, "table" },
-    ["integrations.oil"] = { opts.integrations.oil, "boolean" },
-    ["integrations.telescope"] = { opts.integrations.telescope, "table" },
-  })
+	local valid_prompts = { "title", "keywords", "signature", "date", "extension" }
+	for _, prompt in ipairs(config.prompts) do
+		if not vim.tbl_contains(valid_prompts, prompt) then
+			log.error("validate_config: invalid prompt =", prompt, "valid prompts =", valid_prompts)
+			error("Invalid prompt: " .. prompt)
+		end
+	end
+	log.trace("validate_config: all prompts are valid")
 
-  return opts
+	local supported_extensions = { ".md", ".org", ".txt", ".norg" }
+	if not vim.tbl_contains(supported_extensions, config.extension) then
+		log.error("validate_config: unsupported extension =", config.extension, "supported =", supported_extensions)
+		error("Unsupported extension: " .. config.extension)
+	end
+	log.trace("validate_config: extension is supported")
+
+	log.info("validate_config: configuration is valid")
+end
+
+---Setup configuration
+---@param user_config Denote.Config?
+---@return Denote.Config
+function M.setup(user_config)
+	log.info("setup: setting up denote configuration")
+	log.debug("setup: user_config =", user_config)
+	log.debug("setup: defaults =", defaults)
+
+	local config = vim.tbl_deep_extend("force", {}, defaults, user_config or {})
+	log.trace("setup: merged config =", config)
+
+	config = normalize_config(config)
+	validate_config(config)
+
+	log.info("setup: configuration setup complete")
+	return config
+end
+
+---Get current configuration
+---@return Denote.Config?
+function M.get()
+	local config = _G.denote and _G.denote.config or nil
+	if not config then
+		log.warn("get: no configuration found - plugin may not be initialized")
+	else
+		log.trace("get: returning config =", config)
+	end
+	return config
 end
 
 return M

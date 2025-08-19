@@ -1,0 +1,68 @@
+name: Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        neovim-version: ['stable', 'nightly']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Neovim
+      uses: rhymond/setup-neovim@v1
+      with:
+        neovim-version: ${{ matrix.neovim-version }}
+
+    - name: Setup Lua
+      uses: leafo/gh-actions-lua@v10
+      with:
+        luaVersion: "luajit-2.1.0-beta3"
+
+    - name: Setup LuaRocks
+      uses: leafo/gh-actions-luarocks@v4
+
+    - name: Install dependencies
+      run: |
+        luarocks install busted
+        luarocks install luacheck
+
+    - name: Run linter
+      run: luacheck lua --globals vim
+
+    - name: Run tests
+      run: busted tests
+
+  integration-test:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Neovim
+      uses: rhymond/setup-neovim@v1
+      with:
+        neovim-version: 'stable'
+
+    - name: Test plugin loading
+      run: |
+        nvim --headless -c "
+        lua << EOF
+        vim.opt.rtp:prepend('.')
+        local denote = require('denote')
+        denote.setup({
+          directory = '/tmp/test-notes',
+          extension = '.md',
+          frontmatter = true
+        })
+        print('Plugin loaded successfully!')
+        EOF
+        " -c "qall"

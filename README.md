@@ -1,12 +1,19 @@
 # denote.nvim
 
-This Neovim plugin provides a command `:Denote note` that prompts for a title and keywords
-(tags), then creates a new file in a flat notes directory using the [Emacs Denote package's
-file-naming scheme](https://protesilaos.com/emacs/denote#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d):
+A modern, modular Neovim plugin for creating and managing notes using the [Emacs Denote package's file-naming scheme](https://protesilaos.com/emacs/denote#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d):
 
 `DATE==SIGNATURE--TITLE__KEYWORDS.EXTENSION`
 
-For example:
+## Features
+
+- **Consistent file naming**: Compatible with denote.el format
+- **Frontmatter generation**: Automatic frontmatter for Org-mode, Markdown, and text files
+- **Modular API**: Clean, extensible architecture for advanced usage
+- **Well tested**: Comprehensive unit test coverage
+- **Fast**: Minimal dependencies, optimized for performance
+- **Integrations**: Oil.nvim and Telescope.nvim support
+
+## Example Files
 
 ```
 20240601T174946--how-to-tie-a-tie__lifeskills_clothes.md
@@ -16,78 +23,153 @@ For example:
 20240601T213392==1a1--i-have-a-signature__denote.csv
 ```
 
-That's all this does: create and consistently rename text files using the above scheme. No
-frontmatter, links, etc. I have overcomplicated my notes too many times with fancy Org Mode and
-Zettelkasten systems and this is my minimalist endgame.
+## Installation
 
-The file-naming should be 1:1 with denote.el, down to minor things like triming/combining excess
-whitespace, removing special characters, disallowing multi-word keywords, and separating
-signature terms with = (e.g. `==three=word=sig`).
-
-# Installation / Config
-
-Example config via [lazy.nvim](https://github.com/folke/lazy.nvim)
+### [lazy.nvim](https://github.com/folke/lazy.nvim)
 
 ```lua
 {
   "cvigilv/denote.nvim",
   opts = {
-    ext = "md",             -- Note file extension (e.g. md, org, norg, txt)
-    dir = "~/notes",        -- Notes directory (should already exist)
+    extension = ".md",           -- Default file extension
+    directory = "~/notes",       -- Notes directory
+    frontmatter = true,          -- Generate frontmatter
+    prompts = { "title", "keywords" }, -- Note creation prompts
   },
-},
+}
 ```
 
-## Keymaps
-
-Maybe you want to set keymaps for the commands as well
+### [packer.nvim](https://github.com/wbthomason/packer.nvim)
 
 ```lua
-vim.keymap.set({'n','v'}, '<leader>nn', ":Denote note<cr>",      { desc = "New note"         })
-vim.keymap.set({'n','v'}, '<leader>nt', ":Denote title<cr>",     { desc = "Change title"     })
-vim.keymap.set({'n','v'}, '<leader>nk', ":Denote keywords<cr>",  { desc = "Change keywords"  })
-vim.keymap.set({'n','v'}, '<leader>nz', ":Denote signature<cr>", { desc = "Change signature" })
-vim.keymap.set({'n','v'}, '<leader>ne', ":Denote extension<cr>", { desc = "Change extension" })
+use {
+  "cvigilv/denote.nvim",
+  config = function()
+    require("denote").setup({
+      extension = ".md",
+      directory = "~/notes",
+      frontmatter = true,
+    })
+  end
+}
 ```
 
-## Manual Install
-
-To install without a plugin manager:
+### Manual Installation
 
 ```bash
-mkdir -p ~/.local/share/nvim/site/pack/denote.nvim/start
-cd ~/.local/share/nvim/site/pack/denote.nvim/start
-git clone https://github.com/cvigilv/denote.nvim.git
+git clone https://github.com/cvigilv/denote.nvim.git ~/.local/share/nvim/site/pack/plugins/start/denote.nvim
 ```
 
-Add the following to `~/.config/nvim/init.lua`
+## Configuration
+
+<details>
+<summary>Full configuration example</summary>
 
 ```lua
 require("denote").setup({
-  ext = "md",
-  dir = "~/notes",
+  -- Default file extension (with dot)
+  extension = ".md",
+  
+  -- Notes directory (will be expanded)  
+  directory = "~/notes/",
+  
+  -- Prompts shown when creating notes
+  prompts = { "title", "keywords", "signature" },
+  
+  -- Generate frontmatter based on file extension
+  frontmatter = true,
+  
+  -- Integration settings
+  integrations = {
+    oil = false,
+    telescope = {
+      enabled = true,
+      opts = {
+        theme = "dropdown"
+      }
+    }
+  }
 })
 ```
 
-# :Denote Command
+</details>
+
+## Commands
+
+The plugin provides these commands:
 
 ```vim
-" Creates a new note in the `dir` directory with `ext` extension
-" Keywords are space delimited. The title or keywords can be blank.
-:Denote note
+:Denote note       " Create new note
+:Denote title      " Update note title  
+:Denote keywords   " Update note keywords
+:Denote signature  " Update note signature
+:Denote extension  " Change file extension
+:Denote rename     " Interactive rename
+:Denote search     " Search notes (requires telescope)
+:Denote link       " Insert link to note (requires telescope)
+```
 
-" Renames the current note with the new title
-:Denote title
+### Keymaps
 
-" Renames the current note with the new list of keywords (space delimited)
-:Denote keywords
+```lua
+local map = vim.keymap.set
+map("n", "<leader>nn", ":Denote note<cr>", { desc = "New note" })
+map("n", "<leader>nt", ":Denote title<cr>", { desc = "Change title" })
+map("n", "<leader>nk", ":Denote keywords<cr>", { desc = "Change keywords" })
+map("n", "<leader>ns", ":Denote signature<cr>", { desc = "Change signature" })
+map("n", "<leader>ne", ":Denote extension<cr>", { desc = "Change extension" })
+map("n", "<leader>nr", ":Denote rename<cr>", { desc = "Rename note" })
+```
 
-" Rename the current note with a signature
-" This has a user-defined meaning and no particular purpose
-:Denote signature
+## API Usage
 
-" Rename the current file to a new extension
-:Denote extension
+For advanced usage and integrations:
+
+```lua
+local denote = require("denote")
+
+-- Create note programmatically
+local file_path = denote.create_note({
+  title = "My Note",
+  keywords = "tag1 tag2",
+  signature = "project"
+})
+
+-- Parse existing denote file
+local components = denote.parse_file("/path/to/note.md")
+print(components.title) -- "My Note"
+
+-- Check if file follows denote format
+if denote.is_denote_file("/path/to/file.md") then
+  print("This is a denote file!")
+end
+
+-- Access core modules for advanced operations
+local filename = denote.core.filename
+local frontmatter = denote.core.frontmatter
+local file_ops = denote.core.file
+```
+
+## Development & Debugging
+
+The plugin includes comprehensive logging for debugging. Enable it in your configuration:
+
+```lua
+require("denote").setup({
+  extension = ".md",
+  directory = "~/notes",
+  -- Logging is handled by the logging.lua module
+  -- Check ~/.local/share/nvim/cache/denote.log for detailed logs
+})
+```
+
+### Running Tests
+
+```bash
+make test           # Run all tests
+make lint           # Lint code  
+make check          # Lint + test
+make test-file FILE=tests/filename_spec.lua  # Single test
 ```
 
 # Road map

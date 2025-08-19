@@ -6,7 +6,7 @@ local M = {}
 
 -- Define highlight groups related to Denote
 M.setup = function()
-  vim.cmd([[
+	vim.cmd([[
   hi def link DenoteDate      Number
   hi def link DenoteSignature Special
   hi def link DenoteTitle     Title
