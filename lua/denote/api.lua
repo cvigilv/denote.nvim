@@ -113,4 +113,11 @@ function M.rename_file(opts, filename, identifier, title, signature, keywords, e
   return true
 end
 
+---Regenerate frontmatter for current or specified file
+---@param filename string? File to regenerate frontmatter for
+function M.regenerate_frontmatter(filename)
+  filename = filename or vim.fn.expand("%:p")
+  I.regenerate_frontmatter(filename)
+end
+
 return M

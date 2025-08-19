@@ -4,6 +4,56 @@
 
 local M = {}
 
+-- Helper functions
+---@param date_field string|number
+---@param format_func function
+---@return string
+M.format_date_field = function(date_field, format_func)
+  if type(date_field) == "number" then
+    return format_func(date_field)
+  elseif date_field:match("^%d%d%d%d%d%d%d%dT%d%d%d%d%d%d$") then
+    -- Convert Denote timestamp to proper format
+    local year, month, day, hour, min, sec =
+      date_field:match("^(%d%d%d%d)(%d%d)(%d%d)T(%d%d)(%d%d)(%d%d)$")
+    if year then
+      local timestamp = os.time({
+        year = tonumber(year),
+        month = tonumber(month),
+        day = tonumber(day),
+        hour = tonumber(hour),
+        min = tonumber(min),
+        sec = tonumber(sec),
+      })
+      return format_func(timestamp)
+    end
+  end
+  return date_field
+end
+
+---@param keywords_field string|table
+---@return table
+M.clean_keywords = function(keywords_field)
+  local clean_keywords = {}
+
+  if type(keywords_field) == "table" then
+    for _, kw in ipairs(keywords_field) do
+      local clean_kw = kw:gsub("[^%w%s]", ""):lower():gsub("%s+", "")
+      if clean_kw ~= "" then
+        table.insert(clean_keywords, clean_kw)
+      end
+    end
+  else
+    for word in keywords_field:gmatch("%S+") do
+      local clean_word = word:gsub("[^%w]", ""):lower()
+      if clean_word ~= "" then
+        table.insert(clean_keywords, clean_word)
+      end
+    end
+  end
+
+  return clean_keywords
+end
+
 -- Date formatting functions
 M.format_date_org = function(timestamp)
   timestamp = timestamp or os.time()
@@ -29,7 +79,7 @@ M.parse_org_frontmatter = function(filename)
 
   local lines = vim.fn.readfile(filename, "", 10)
   for _, line in ipairs(lines) do
-    if line == "" then
+    if line == "" and next(frontmatter) then
       break
     end
 
@@ -60,15 +110,16 @@ M.generate_org_frontmatter = function(fields)
   end
 
   if fields.date then
-    local date_str = type(fields.date) == "number" and M.format_date_org(fields.date)
-      or fields.date
+    local date_str = M.format_date_field(fields.date, M.format_date_org)
     table.insert(lines, "#+date:       " .. date_str)
   end
 
   if fields.keywords then
-    local tags = type(fields.keywords) == "table" and table.concat(fields.keywords, ":")
-      or fields.keywords:gsub("%s+", ":")
-    table.insert(lines, "#+filetags:   :" .. tags .. ":")
+    local clean_keywords = M.clean_keywords(fields.keywords)
+    if #clean_keywords > 0 then
+      local tags = table.concat(clean_keywords, ":")
+      table.insert(lines, "#+filetags:   :" .. tags .. ":")
+    end
   end
 
   if fields.identifier then
@@ -120,15 +171,15 @@ M.generate_yaml_frontmatter = function(fields)
   end
 
   if fields.date then
-    local date_str = type(fields.date) == "number" and M.format_date_markdown(fields.date)
-      or fields.date
+    local date_str = M.format_date_field(fields.date, M.format_date_markdown)
     table.insert(lines, "date:       " .. date_str)
   end
 
   if fields.keywords then
-    local tags = type(fields.keywords) == "table" and fields.keywords
-      or vim.split(fields.keywords, "%s+")
-    table.insert(lines, 'tags:       ["' .. table.concat(tags, '", "') .. '"]')
+    local clean_keywords = M.clean_keywords(fields.keywords)
+    if #clean_keywords > 0 then
+      table.insert(lines, 'tags:       ["' .. table.concat(clean_keywords, '", "') .. '"]')
+    end
   end
 
   if fields.identifier then
@@ -181,15 +232,15 @@ M.generate_toml_frontmatter = function(fields)
   end
 
   if fields.date then
-    local date_str = type(fields.date) == "number" and M.format_date_markdown(fields.date)
-      or fields.date
+    local date_str = M.format_date_field(fields.date, M.format_date_markdown)
     table.insert(lines, "date       = " .. date_str)
   end
 
   if fields.keywords then
-    local tags = type(fields.keywords) == "table" and fields.keywords
-      or vim.split(fields.keywords, "%s+")
-    table.insert(lines, 'tags       = ["' .. table.concat(tags, '", "') .. '"]')
+    local clean_keywords = M.clean_keywords(fields.keywords)
+    if #clean_keywords > 0 then
+      table.insert(lines, 'tags       = ["' .. table.concat(clean_keywords, '", "') .. '"]')
+    end
   end
 
   if fields.identifier then
@@ -237,15 +288,15 @@ M.generate_text_frontmatter = function(fields)
   end
 
   if fields.date then
-    local date_str = type(fields.date) == "number" and M.format_date_text(fields.date)
-      or fields.date
+    local date_str = M.format_date_field(fields.date, M.format_date_text)
     table.insert(lines, "date:       " .. date_str)
   end
 
   if fields.keywords then
-    local tags = type(fields.keywords) == "table" and table.concat(fields.keywords, "  ")
-      or fields.keywords
-    table.insert(lines, "tags:       " .. tags)
+    local clean_keywords = M.clean_keywords(fields.keywords)
+    if #clean_keywords > 0 then
+      table.insert(lines, "tags:       " .. table.concat(clean_keywords, "  "))
+    end
   end
 
   if fields.identifier then
@@ -256,7 +307,9 @@ M.generate_text_frontmatter = function(fields)
   return table.concat(lines, "\n") .. "\n"
 end
 
--- Generic frontmatter functions based on filetype
+-- Generic interface for frontmatter handling
+
+---Parse frontmatter
 ---@param filename string
 ---@param filetype string|nil
 ---@return table|nil frontmatter
@@ -280,6 +333,7 @@ M.parse_frontmatter = function(filename, filetype)
   return nil
 end
 
+---Generate frontmatter
 ---@param fields table
 ---@param filetype string
 ---@return string

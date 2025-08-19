@@ -22,6 +22,8 @@ M.setup = function(options)
       api.extension()
     elseif opts.fargs[1] == "rename-file" then
       api.rename_file(options)
+    elseif opts.fargs[1] == "frontmatter" then
+      api.regenerate_frontmatter()
     ---@diagnostic disable-next-line: need-check-nil
     elseif opts.fargs[1] == "search" and options.integrations.telescope.enabled then
       require("denote.integrations.telescope").search(options)
@@ -43,6 +45,7 @@ M.setup = function(options)
         "signature",
         "extension",
         "rename-file",
+        "frontmatter",
         "insert-link",
       }
 
