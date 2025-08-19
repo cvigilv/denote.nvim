@@ -28,6 +28,30 @@ local function format_entry(filename)
   results["filename"] = filename
   if results.identifier then
     results["filename"] = ""
+
+    -- Try to enhance with frontmatter data if this is a Denote file
+    local filepath = filename
+    local ext = vim.fn.fnamemodify(filepath, ":e"):lower()
+    local filetype = "text" -- default
+    if ext == "org" then
+      filetype = "org"
+    elseif ext == "md" then
+      filetype = "markdown"
+    end
+
+    local frontmatter = require("denote.helpers.frontmatter")
+    local fm_data = frontmatter.parse_frontmatter(filepath, filetype)
+    if fm_data then
+      -- Override with frontmatter data if available (use literally)
+      if fm_data.title then
+        results.title = fm_data.title
+      end
+      if fm_data.keywords then
+        results.keywords = type(fm_data.keywords) == "table"
+            and table.concat(fm_data.keywords, " ")
+          or fm_data.keywords
+      end
+    end
   end
 
   return results
