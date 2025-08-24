@@ -10,6 +10,7 @@ local M = {}
 ---@param options Denote.Configuration User provided configuration table
 M.setup = function(options)
   vim.api.nvim_create_user_command("Denote", function(opts)
+    -- Core
     if opts.fargs[1] == "note" then
       api.note(options)
     elseif opts.fargs[1] == "title" then
@@ -24,6 +25,7 @@ M.setup = function(options)
       api.rename_file(options)
     elseif opts.fargs[1] == "frontmatter" then
       api.regenerate_frontmatter()
+    -- Telescope integrations
     elseif opts.fargs[1] == "search" and options.integrations.telescope.enabled then
       require("denote.integrations.telescope").search(options)
     elseif opts.fargs[1] == "insert-link" and options.integrations.telescope.enabled then
@@ -45,12 +47,13 @@ M.setup = function(options)
         "extension",
         "rename-file",
         "frontmatter",
-        "insert-link",
       }
 
       -- Integrationg
       if options.integrations.telescope.enabled then
         table.insert(subcommands, "search")
+        table.insert(subcommands, "insert-link")
+        table.insert(subcommands, "link")
       end
 
       return subcommands
