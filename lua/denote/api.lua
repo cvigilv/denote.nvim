@@ -118,6 +118,7 @@ end
 function M.regenerate_frontmatter(filename)
   filename = filename or vim.fn.expand("%:p")
   I.regenerate_frontmatter(filename)
+  vim.cmd("edit! " .. filename)
 end
 
 return M
