@@ -24,7 +24,6 @@ M.setup = function(options)
       api.rename_file(options)
     elseif opts.fargs[1] == "frontmatter" then
       api.regenerate_frontmatter()
-    ---@diagnostic disable-next-line: need-check-nil
     elseif opts.fargs[1] == "search" and options.integrations.telescope.enabled then
       require("denote.integrations.telescope").search(options)
     elseif opts.fargs[1] == "insert-link" and options.integrations.telescope.enabled then
