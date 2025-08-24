@@ -64,6 +64,9 @@ M.setup = function(opts)
   require("denote.helpers.highlights").setup()
 
   -- Generate searchers
+
+  ---Search note
+  ---@param options Denote.Configuration User configuration
   M.search = function(options)
     ---@type Denote.Configuration
     local tele_opts = options.integrations.telescope.opts
@@ -109,6 +112,9 @@ M.setup = function(opts)
       :find()
   end
 
+  ---Insert link prompt
+  ---@param options Denote.Configuration User configuration
+  ---@param interactive boolean Whether to prompt for description when inserting link
   M.insert_link = function(options, interactive)
     ---@type Denote.Configuration
     local tele_opts = options.integrations.telescope.opts
@@ -119,14 +125,7 @@ M.setup = function(opts)
 
       local displayer = entry_display.create({
         separator = "  ",
-        items = {
-          { remaining = true },
-          { remaining = true },
-          { remaining = true },
-          { remaining = true },
-          { remaining = true },
-          { remaining = true },
-        },
+        items = { {}, {}, {}, {}, {}, {} },
       })
 
       return displayer({
@@ -173,13 +172,18 @@ M.setup = function(opts)
             local function format_link(description, path, filetype, is_list_item)
               local prefix = is_list_item and "- " or ""
               local link
-
               if string.match(filetype, "markdown") then
                 link = string.format("[%s](%s)", description, path)
               elseif string.match(filetype, "neorg") then
                 link = string.format("{%s:%s:}", description, path)
+              elseif string.match(filetype, "org") then
+                link = string.format(
+                  "[[denote:%s][%s]]",
+                  path:match(Internal.PATTERNS.identifier),
+                  description
+                )
               else
-                link = string.format("[[file:%s][%s]]", path, description)
+                link = string.format("%s (%s)", description, path)
               end
 
               return prefix .. link
