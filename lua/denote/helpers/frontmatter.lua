@@ -87,10 +87,13 @@ M.parse_org_frontmatter = function(filename)
     if field then
       field = field:lower()
       if field == "filetags" then
-        frontmatter.keywords =
-          value:gsub(":", " "):gsub("^%s+", ""):gsub("%s+$", ""):gsub("%s+", " ")
+        frontmatter.keywords = vim.split(
+          value:gsub("^%s+", ""):gsub("%s+$", ""):gsub("%s+", " "),
+          ":",
+          { trimempty = true }
+        )
       elseif field == "date" then
-        frontmatter.date = value:gsub("^%[", ""):gsub("%]$", "")
+        frontmatter.date = value
       else
         frontmatter[field] = value
       end

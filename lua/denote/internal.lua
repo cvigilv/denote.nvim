@@ -697,6 +697,7 @@ end
 
 --- FRONTMATTER UTILITIES
 
+--TODO: Move to helpers/frontmatter.lua
 ---Update a specific field in the frontmatter
 ---@param filename string
 ---@param field string
@@ -742,6 +743,7 @@ function M.update_frontmatter_field(filename, field, value)
   end
 end
 
+--TODO: Move to helpers/frontmatter.lua
 ---Replace frontmatter in file
 ---@param filename string
 ---@param new_frontmatter string
@@ -816,6 +818,7 @@ function M.replace_frontmatter_in_file(filename, new_frontmatter, filetype)
   end
 end
 
+--TODO: Move to helpers/frontmatter.lua
 ---Remove frontmatter from file
 ---@param filename string
 ---@param filetype string
@@ -914,6 +917,20 @@ function M.regenerate_frontmatter(filename)
 
   local new_fm_content = frontmatter.generate_frontmatter(fm_fields, filetype)
   M.replace_frontmatter_in_file(filename, new_fm_content, filetype)
+end
+
+---Synchronize frontmatter with filename
+---@param filename string
+function M.sync_frontmatter(filename)
+  filename = filename or vim.api.nvim_buf_get_name(0)
+  local filetype = vim.filetype.match({ filename = filename })
+  local components = vim.tbl_deep_extend(
+    "force",
+    {},
+    M.parse_filename(filename),
+    require("denote.helpers.frontmatter").parse_frontmatter(filename, filetype)
+  )
+
 end
 
 return M
