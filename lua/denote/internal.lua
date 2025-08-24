@@ -4,6 +4,10 @@
 
 local M = {}
 
+-- CONSTANTS
+
+--- Denote component regex patterns
+---@type table<string,string>
 M.PATTERNS = {
   identifier = "(%d%d%d%d%d%d%d%dT%d%d%d%d%d%d)",
   signature = "==([a-zA-Z0-9=]+)",
@@ -11,6 +15,9 @@ M.PATTERNS = {
   keywords = "__([a-z0-9_]+)",
   extension = "(%.[^%s%.]+)",
 }
+
+--- Denote component separator characters
+---@type table<string,string>
 M.SEPARATORS = {
   identifier = "@",
   signature = "=",
@@ -18,6 +25,9 @@ M.SEPARATORS = {
   keywords = "_",
   extension = ".",
 }
+
+--- Filetype to extension mapping table
+---@type table<string,string>
 M.FILETYPE_TO_EXTENSION = {
   org = ".org",
   neorg = ".norg",
