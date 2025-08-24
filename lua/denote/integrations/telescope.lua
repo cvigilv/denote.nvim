@@ -3,46 +3,30 @@
 ---@license MIT 2025
 
 local Internal = require("denote.internal")
+local frontmatter = require("denote.helpers.frontmatter")
 
-local function format_entry(filename)
-  -- Define patterns
-  local patterns = {
-    identifier = "(%d%d%d%d%d%d%d%dT%d%d%d%d%d%d)",
-    signature = "==([a-zA-Z0-9=]+)",
-    title = "%-%-([a-z0-9%-]+)",
-    keywords = "__([a-z0-9_]+)",
-    extension = "(%.[^%s%.]+)",
-  }
-
+local function format_entry(filepath)
   -- Initialize results table
   local results = {}
 
   -- Find all matches for each pattern
-  for name, pattern in pairs(patterns) do
-    for match in string.gmatch(filename, pattern) do
+  for name, pattern in pairs(Internal.PATTERNS) do
+    for match in string.gmatch(filepath, pattern) do
       results[name] = match
     end
   end
 
   -- Check if format complies with denote file format
-  results["filename"] = filename
+  results["filename"] = filepath
   if results.identifier then
+    -- Remove data so it doesn't show in picker
     results["filename"] = ""
 
     -- Try to enhance with frontmatter data if this is a Denote file
-    local filepath = filename
-    local ext = vim.fn.fnamemodify(filepath, ":e"):lower()
-    local filetype = "text" -- default
-    if ext == "org" then
-      filetype = "org"
-    elseif ext == "md" then
-      filetype = "markdown"
-    end
-
-    local frontmatter = require("denote.helpers.frontmatter")
+    local filetype = vim.filetype.match({ filename = filepath })
     local fm_data = frontmatter.parse_frontmatter(filepath, filetype)
     if fm_data then
-      -- Override with frontmatter data if available (use literally)
+      -- Override with frontmatter data if available
       if fm_data.title then
         results.title = fm_data.title
       end
@@ -86,18 +70,11 @@ M.setup = function(opts)
 
     -- Define how to build entry for Telescope
     local make_display = function(entry)
-      local components = format_entry(vim.fs.basename(entry.value))
+      local components = format_entry(entry.value)
 
       local displayer = entry_display.create({
-        separator = "  ",
-        items = {
-          { remaining = true },
-          { remaining = true },
-          { remaining = true },
-          { remaining = true },
-          { remaining = true },
-          { remaining = true },
-        },
+        separator = " ",
+        items = { {}, {}, {}, {}, {}, {} },
       })
 
       return displayer({
@@ -131,13 +108,14 @@ M.setup = function(opts)
       })
       :find()
   end
+
   M.insert_link = function(options, interactive)
     ---@type Denote.Configuration
     local tele_opts = options.integrations.telescope.opts
 
     -- Define how to build entry for Telescope
     local make_display = function(entry)
-      local components = format_entry(vim.fs.basename(entry.value))
+      local components = format_entry(entry.value)
 
       local displayer = entry_display.create({
         separator = "  ",
@@ -238,10 +216,13 @@ M.setup = function(opts)
               if not is_multiple and interactive then
                 description = vim.fn.input({
                   prompt = "[denote] Link description: ",
-                  default = Internal.parse_filename(entry.path, false)["title"]:gsub("-", " "),
+                  default = frontmatter.parse_frontmatter(entry.path, filetype)["title"]
+                    or Internal.parse_filename(entry.path, false)["title"]:gsub("-", " ")
+                    or "",
                 })
               else
-                description = Internal.parse_filename(entry.path)["identifier"]
+                description = frontmatter.parse_frontmatter(entry.path, filetype)["identifier"]
+                  or Internal.parse_filename(entry.path)["identifier"]
               end
 
               table.insert(links, format_link(description, path, filetype, is_multiple))
