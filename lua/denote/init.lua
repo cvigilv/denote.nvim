@@ -11,10 +11,10 @@ function M.setup(options)
 
   -- Initialize extensions
   if options.integrations.oil then
-    require("denote.integrations.oil").setup(options)
+    require("denote.extensions.oil").setup(options)
   end
   if options.integrations.telescope then
-    require("denote.integrations.telescope").setup(options)
+    require("denote.extensions.telescope").setup(options)
   end
 
   -- Initialize excommands

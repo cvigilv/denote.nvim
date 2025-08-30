@@ -1,6 +1,5 @@
-local utils = require("orgmode.utils")
-local internal = require("denote.internal")
-local DEFAULT_CONFIG = _G.denote.config
+local CONFIG = _G.denote.config
+local Naming = require("denote.naming")
 
 ---@class OrgLinkDenote:OrgLinkType
 ---@field private files OrgFiles
@@ -10,7 +9,7 @@ OrgLinkDenote.__index = OrgLinkDenote
 
 ---@param opts { files: OrgFiles, config?: table }
 function OrgLinkDenote:new(opts)
-  local config = vim.tbl_deep_extend("force", DEFAULT_CONFIG, opts.config or {})
+  local config = vim.tbl_deep_extend("force", CONFIG, opts.config or {})
   return setmetatable({
     files = opts.files,
     config = config,
@@ -26,7 +25,7 @@ end
 ---@return boolean
 function OrgLinkDenote:follow(link)
   local denote_id = tostring(self:_parse(link))
-  if denote_id:match(internal.PATTERNS.identifier) then
+  if denote_id:match(Naming.PATTERNS.identifier) then
     local identifier = tostring(self:_parse(link))
     local denote_file = self:_find_denote_file(identifier)
     if denote_file ~= nil then
@@ -46,6 +45,7 @@ function OrgLinkDenote:autocomplete(context)
   local denote_files = self:_get_denote_files()
   for _, file_info in ipairs(denote_files) do
     local completion = string.format("%s:%s", self:get_name(), file_info.id)
+---@diagnostic disable-next-line: undefined-field
     if context.matcher(completion, context.base) then
       table.insert(items, completion)
     end

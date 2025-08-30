@@ -1,4 +1,4 @@
----@module "denote.utils.string"
+---@module "denote.core.string"
 ---@author Carlos Vigil-Vásquez
 ---@license MIT 2025
 
@@ -182,7 +182,7 @@ end
 ---Make lowercase, remove special chars & diacritics, remove extraneous spaces
 ---@param str string
 ---@return string str Plain string
-function M.plain_format(str)
+function M.sanitize(str)
   if str == nil then
     return ""
   end
@@ -193,19 +193,5 @@ function M.plain_format(str)
   str = str:gsub("%s+", " ")
   return str
 end
-
----Format the title/keywords/sig string of a Denote filename
----@param str string
----@param char string delimiter that replaces spaces (- for titles, _ for keywords, = for sigs)
-function M.format_denote_string(str, char)
-  str = M.trim(str)
-  str = M.plain_format(str)
-  if str == "" then
-    return ""
-  end
-  str = char .. char .. str:gsub("%s", char)
-  return str
-end
-
 
 return M

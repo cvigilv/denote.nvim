@@ -2,123 +2,159 @@
 ---@author Carlos Vigil-Vásquez
 ---@license MIT 2025
 
-local I = require("denote.internal")
-local Prompts = require("denote.helpers.prompts")
+local Prompts = require("denote.ui.prompts")
+local Naming = require("denote.naming")
+local String = require("denote.core.string")
+local Filesystem = require("denote.core.fs")
+
+local FILETYPE_TO_EXTENSION = {
+  org = ".org",
+  neorg = ".norg",
+  ["markdown-yaml"] = ".md",
+  ["markdown-toml"] = ".md",
+  text = ".txt",
+}
 
 local M = {}
 
 -- Create a new note interactively
----@param opts Denote.Configuration
-function M.note(opts)
+function M.denote()
+  local opts = _G.denote.config
   -- Define base fields
+  local identifier = Naming.generate_timestamp()
   local fields = {
-    date = I.generate_timestamp(),
-    extension = I.FILETYPE_TO_EXTENSION[opts.filetype],
+    identifier = identifier,
+    date = Naming.timestamp_to_date(identifier),
+    extension = FILETYPE_TO_EXTENSION[opts.filetype],
   }
   -- Prompt user for fields defined in `opts.prompts`
   for _, field in ipairs(opts.prompts) do
-    fields[field] = Prompts[field]()
+    fields[field] = Prompts[field](nil, fields)
   end
-  vim.print(fields)
   -- Create new note
-  I.new_note(fields, opts)
+  local filename = Naming.generate_filename(fields) --[[@as string]]
+  if Naming.is_denote(filename) then
+    vim.cmd("edit " .. opts.directory .. filename)
+    vim.cmd("startinsert")
+    return true
+  else
+    error("[denote] The new filename doesn't look like a Denote filename")
+    return false
+  end
 end
 
 -- Update title of file
 ---@param filename string? File to update
 ---@param title string? New title
-function M.title(filename, title)
+---@return boolean status Whether the title update was succesfully executed
+function M.rename_file_title(filename, title)
   filename = filename or vim.fn.expand("%:p")
-  title = title or Prompts.title(filename)
-  I.update_title(filename, title)
+  if not Naming.is_denote(filename) then
+    error("[denote] This doesn't look like a Denote file")
+    return false
+  end
+
+  local components = Naming.parse_filename(filename, false)
+  components.title = title or Prompts.title(filename, components)
+  components.title = Naming.as_component_string(components.title, "title")
+  local new_filename = Naming.generate_filename(components)
+
+  if filename ~= nil then
+    Filesystem.replace_file(filename, new_filename --[[@as string]])
+    return true
+  else
+    error("[denote] Failed to change title of file")
+    return false
+  end
 end
 
 -- Update signature of file
 ---@param filename string? File to update
 ---@param signature string? New signature
-function M.signature(filename, signature)
+---@return boolean status Whether the signature update was succesfully executed
+function M.rename_file_signature(filename, signature)
   filename = filename or vim.fn.expand("%:p")
-  signature = signature or Prompts.signature(filename)
-  I.update_signature(filename, signature)
+  if not Naming.is_denote(filename) then
+    error("[denote] This doesn't look like a Denote file")
+    return false
+  end
+
+  local components = Naming.parse_filename(filename, false)
+  components.signature = signature or Prompts.signature(filename, components)
+  components.signature = Naming.as_component_string(components.signature, "signature")
+  local new_filename = Naming.generate_filename(components)
+
+  if filename ~= nil then
+    Filesystem.replace_file(filename, new_filename --[[@as string]])
+    return true
+  else
+    error("[denote] Failed to change signature of file")
+    return false
+  end
 end
 
 -- Update keywords of file
 ---@param filename string? File to update
 ---@param keywords string? New keywords
-function M.keywords(filename, keywords)
+---@return boolean status Whether the keywords update was succesfully executed
+function M.rename_file_keywords(filename, keywords)
   filename = filename or vim.fn.expand("%:p")
-  keywords = keywords or Prompts.keywords(filename)
-  I.update_keyword(filename, keywords)
-end
+  if not Naming.is_denote(filename) then
+    error("[denote] This doesn't look like a Denote file")
+    return false
+  end
 
--- Update extension of file
----@param filename string? File to update
----@param extension string? New extension
-function M.extension(filename, extension)
-  filename = filename or vim.fn.expand("%:p")
-  extension = extension or Prompts.extension(filename)
-  I.update_extension(filename, extension)
+  local components = Naming.parse_filename(filename, false)
+  components.keywords = keywords or Prompts.keywords(filename, components)
+  components.keywords = Naming.as_component_string(components.keywords, "keywords")
+  local new_filename = Naming.generate_filename(components)
+
+  if filename ~= nil then
+    Filesystem.replace_file(filename, new_filename --[[@as string]])
+    return true
+  else
+    error("[denote] Failed to change keywords of file")
+    return false
+  end
 end
 
 ---Rename file into a Denote compliant format. If no arguments are passed, it runs interactively.
----@param opts Denote.Configuration
 ---@param filename string? File to rename, defaults to current file.
----@param title string? New title
----@param signature string? New signature
----@param keywords string? New keywords
----@param extension string? New extension
 ---@return boolean status Whether the rename process was succesfully executed
-function M.rename_file(opts, filename, identifier, title, signature, keywords, extension)
-  opts = opts or _G.denote.config
-
+function M.rename_file(filename)
   -- Parse filename to get current fields
   filename = filename or vim.fn.expand("%:p")
-  local fields = I.parse_filename(filename, false)
-  if not fields then
-    error("[denote] Doesn't look like a Denote file", 4)
-    return false
-  end
-
-  -- Prompt user for fields defined in `opts.prompts`
-  for _, field in ipairs(opts.prompts) do
-    fields[field] = Prompts[field]()
-  end
-
-  -- Load fields
-  identifier = identifier or fields["identifier"] or ""
-  title = title or fields["title"] or ""
-  keywords = keywords or fields["keywords"] or ""
-  signature = signature or fields["signature"] or ""
-  extension = extension or fields["extension"] or ""
-
-  -- Check if date is in Denote's format
-  if not identifier:match(I.PATTERNS.identifier) then
-    error("[denote] Doesn't look like a denote file", 4)
-    return false
-  end
-
-  -- Generate new filename
-  local new_filename = identifier
-    .. I.format_denote_string(signature --[[@as string]], "=")
-    .. I.format_denote_string(title --[[@as string]], "-")
-    .. I.format_denote_string(keywords --[[@as string]], "_")
-    .. extension
-
-  -- Rename file
-  I.replace_file(
-    filename,
-    vim.fs.normalize(vim.fs.dirname(vim.fs.abspath(filename)) .. "/" .. new_filename)
+  -- Get file info and store as temporal fields
+  local fields = vim.tbl_extend(
+    "force",
+    {},
+    {
+      identifier = Naming.generate_timestamp(filename) or "",
+      title = Naming.as_component_string(vim.fn.fnamemodify(filename, ":t:r"), "title") or "",
+      date = "",
+      keywords = "",
+      signature = "",
+      extension = vim.fn.fnamemodify(filename, ":e"),
+    },
+    Naming.parse_filename(filename, false)
   )
-
-  return true
-end
-
----Regenerate frontmatter for current or specified file
----@param filename string? File to regenerate frontmatter for
-function M.regenerate_frontmatter(filename)
-  filename = filename or vim.fn.expand("%:p")
-  I.regenerate_frontmatter(filename)
-  vim.cmd("edit! " .. filename)
+  -- Prompt user for fields
+  for _, field in ipairs(_G.denote.config.prompts) do
+    fields[field] = Naming.as_component_string(Prompts[field](filename, fields), field)
+  end
+  -- Generate new filename
+  local new_filename = Naming.generate_filename(fields) --[[@as string]]
+  -- Rename file if new filename is Denote compliant
+  if Naming.is_denote(new_filename) then
+    Filesystem.replace_file(
+      filename,
+      vim.fs.normalize(vim.fs.dirname(vim.fs.abspath(filename)) .. "/" .. new_filename)
+    )
+    return true
+  else
+    error("[denote] The new filename doesn't look like a Denote filename")
+    return false
+  end
 end
 
 return M

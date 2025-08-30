@@ -2,37 +2,40 @@
 ---@author Carlos Vigil-Vásquez
 ---@license MIT 2025
 
-local U = require("denote.internal")
+local S = require("denote.core.string")
 
-local function _prompt_factory(filename, field)
+local function _prompt_factory(filename, components, field)
   filename = filename or vim.fn.expand("%:p")
-  local fields = U.parse_filename(filename, false)
   local v
   vim.ui.input({
     prompt = string.format("[denote] New %s: ", field),
-    default = string.gsub(fields[field] or "", "%" .. U.SEPARATORS[field], " "),
+    default = components[field] or "",
   }, function(e)
-    v = U.trim(e)
+    v = S.trim(e)
   end)
   return v
 end
 
 local M = {}
 
-function M.signature(filename)
-  return _prompt_factory(filename, "signature")
+M.signature = function(filename, components)
+  return _prompt_factory(filename, components, "signature")
 end
-function M.date(filename)
-  return _prompt_factory(filename, "identifier")
+
+M.date = function(filename, components)
+  return _prompt_factory(filename, components, "identifier")
 end
-function M.keywords(filename)
-  return _prompt_factory(filename, "keywords")
+
+M.keywords = function(filename, components)
+  return _prompt_factory(filename, components, "keywords")
 end
-function M.title(filename)
-  return _prompt_factory(filename, "title")
+
+M.title = function(filename, components)
+  return _prompt_factory(filename, components, "title")
 end
-function M.extension(filename)
-  return _prompt_factory(filename, "extension")
+
+M.extension = function(filename, components)
+  return _prompt_factory(filename, components, "extension")
 end
 
 return M

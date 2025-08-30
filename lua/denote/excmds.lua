@@ -10,43 +10,39 @@ local M = {}
 ---@param options Denote.Configuration User provided configuration table
 M.setup = function(options)
   vim.api.nvim_create_user_command("Denote", function(opts)
+    vim.print(opts)
     -- Core
-    if opts.fargs[1] == "note" then
-      api.note(options)
-    elseif opts.fargs[1] == "title" then
-      api.title()
-    elseif opts.fargs[1] == "keywords" then
-      api.keywords()
-    elseif opts.fargs[1] == "signature" then
-      api.signature()
-    elseif opts.fargs[1] == "extension" then
-      api.extension()
-    elseif opts.fargs[1] == "rename-file" then
-      api.rename_file(options)
-    elseif opts.fargs[1] == "frontmatter" then
-      api.regenerate_frontmatter()
+    local cmd = opts.fargs
+    if #cmd == 0 then
+      api.denote()
+    elseif cmd[1] == "rename-file" then
+      api.rename_file()
+    elseif cmd[1] == "rename-file-title" then
+      api.rename_file_title()
+    elseif cmd[1] == "rename-file-keywords" then
+      api.rename_file_keywords()
+    elseif cmd[1] == "rename-file-signature" then
+      api.rename_file_signature()
     -- Telescope integrations
-    elseif opts.fargs[1] == "search" and options.integrations.telescope.enabled then
-      require("denote.integrations.telescope").search(options)
-    elseif opts.fargs[1] == "insert-link" and options.integrations.telescope.enabled then
-      require("denote.integrations.telescope").insert_link(options, true)
-    elseif opts.fargs[1] == "link" and options.integrations.telescope.enabled then
-      require("denote.integrations.telescope").insert_link(options, false)
+    elseif cmd[1] == "search" and options.integrations.telescope.enabled then
+      require("denote.extensions.telescope").search(options)
+    elseif cmd[1] == "insert-link" and options.integrations.telescope.enabled then
+      require("denote.extensions.telescope").insert_link(options, true)
+    elseif cmd[1] == "link" and options.integrations.telescope.enabled then
+      require("denote.extensions.telescope").insert_link(options, false)
     else
-      error("Unsupported operation " .. opts.fargs[1])
+      error("[denote] Unsupported operation " .. opts.fargs[1])
     end
   end, {
-    nargs = 1,
+    nargs = "*",
     complete = function()
       -- Builtin
       local subcommands = {
-        "note",
-        "title",
-        "keywords",
-        "signature",
-        "extension",
         "rename-file",
-        "frontmatter",
+        "rename-file",
+        "rename-file-title",
+        "rename-file-keywords",
+        "rename-file-signature",
       }
 
       -- Integrationg

@@ -21,7 +21,7 @@ local M = {}
 ---Setup stevearc/oil.nvim integration
 ---@param opts Denote.Configuration
 function M.setup(opts)
-  require("denote.helpers.highlights").setup()
+  require("denote.ui.highlights").setup()
 
   -- Add highlighting to denote file naming convention components in `opts.dir` Oil buffer
   vim.api.nvim_create_autocmd("BufReadPost", {

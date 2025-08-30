@@ -2,15 +2,15 @@
 ---@author Carlos Vigil-Vásquez
 ---@license MIT 2025
 
-local Internal = require("denote.internal")
-local frontmatter = require("denote.helpers.frontmatter")
+local Naming = require("denote.naming")
+local frontmatter = require("denote.frontmatter")
 
 local function format_entry(filepath)
   -- Initialize results table
   local results = {}
 
   -- Find all matches for each pattern
-  for name, pattern in pairs(Internal.PATTERNS) do
+  for name, pattern in pairs(Naming.PATTERNS) do
     for match in string.gmatch(filepath, pattern) do
       results[name] = match
     end
@@ -44,26 +44,24 @@ end
 local M = {}
 
 --- Setup Telescope integration
----@param opts Denote.Configuration User configuration
+---@param opts? Denote.Configuration User configuration
+---@diagnostic disable-next-line: unused-local
 M.setup = function(opts)
+  -- Check if telescope exists
+  local telescope_installed, _ = pcall(require, "telescope")
+
+  if not telescope_installed then
+    error("[denote] This plugin requires nvim-telescope/telescope.nvim")
+  end
+
+  -- Initialize
   local entry_display = require("telescope.pickers.entry_display")
   local finders = require("telescope.finders")
   local pickers = require("telescope.pickers")
   local conf = require("telescope.config").values
   local actions = require("telescope.actions")
   local action_state = require("telescope.actions.state")
-
-  -- Check if telescope exists
-  local telescope_installed, _ = pcall(require, "telescope")
-
-  if not telescope_installed then
-    error("This plugin requires nvim-telescope/telescope.nvim")
-  end
-
-  -- Initialize
-  require("denote.helpers.highlights").setup()
-
-  -- Generate searchers
+  require("denote.ui.highlights").setup()
 
   ---Search note
   ---@param options Denote.Configuration User configuration
@@ -179,7 +177,7 @@ M.setup = function(opts)
               elseif string.match(filetype, "org") then
                 link = string.format(
                   "[[denote:%s][%s]]",
-                  path:match(Internal.PATTERNS.identifier),
+                  path:match(Naming.PATTERNS.identifier),
                   description
                 )
               else
@@ -221,12 +219,12 @@ M.setup = function(opts)
                 description = vim.fn.input({
                   prompt = "[denote] Link description: ",
                   default = frontmatter.parse_frontmatter(entry.path, filetype)["title"]
-                    or Internal.parse_filename(entry.path, false)["title"]:gsub("-", " ")
+                    or Naming.parse_filename(entry.path, false)["title"]:gsub("-", " ")
                     or "",
                 })
               else
                 description = frontmatter.parse_frontmatter(entry.path, filetype)["identifier"]
-                  or Internal.parse_filename(entry.path)["identifier"]
+                  or Naming.parse_filename(entry.path)["identifier"]
               end
 
               table.insert(links, format_link(description, path, filetype, is_multiple))
