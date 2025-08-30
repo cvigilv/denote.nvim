@@ -1,0 +1,207 @@
+*denote.nvim*	Simple notes for Emacs with an efficient file-naming scheme
+
+==============================================================================
+1. Overview                                                  *denote-overview*
+
+NOTE: this is copy-pasted from the denote.el manual, since I think it provides
+      the best description on what this plugin intends to do.
+
+Denote aims to be a simple-to-use, focused-in-scope, and effective note-taking
+and file-naming tool for Emacs.
+
+Denote is based on the idea that files should follow a predictable and
+descriptive file-naming scheme. The file name must offer a clear indication of
+what the contents are about, without reference to any other metadata. Denote
+basically streamlines the creation of such files or file names while providing
+facilities to link between them (where those files are editable).
+
+Denote’s file-naming scheme is not limited to “notes”. It can be used for all
+types of file, including those that are not editable in Emacs, such as videos.
+Naming files in a consistent way makes their filtering and retrieval
+considerably easier. Denote provides relevant facilities to rename files,
+regardless of file type.
+
+Denote is based on the following core design principles:
+
+Predictability File names must follow a consistent and descriptive naming
+convention (The file-naming scheme). The file name alone should offer a clear
+indication of what the contents are, without reference to any other metadatum.
+This convention is not specific to note-taking, as it is pertinent to any form
+of file that is part of the user’s long-term storage (Renaming files).
+Composability Be a good Emacs citizen, by integrating with other packages or
+built-in functionality instead of re-inventing functions such as for filtering
+or greping. The author of Denote (Protesilaos, aka “Prot”) writes ordinary
+notes in plain text (.txt), switching on demand to an Org file only when its
+expanded set of functionality is required for the task at hand (Points of
+entry). Portability Notes are plain text and should remain portable. The way
+Denote writes file names, the front matter it includes in the note’s header,
+and the links it establishes must all be adequately usable with standard Unix
+tools. No need for a database or some specialised software. As Denote develops
+and this manual is fully fleshed out, there will be concrete examples on how
+to do the Denote-equivalent on the command-line. Flexibility Do not assume the
+user’s preference for a note-taking methodology. Denote is conceptually
+similar to the Zettelkasten Method, which you can learn more about in this
+detailed introduction: https://zettelkasten.de/introduction/. Notes are atomic
+(one file per note) and have a unique identifier. However, Denote does not
+enforce a particular methodology for knowledge management, such as a
+restricted vocabulary or mutually exclusive sets of keywords. Denote also does
+not check if the user writes thematically atomic notes. It is up to the user
+to apply the requisite rigor and/or creativity in pursuit of their preferred
+workflow (Writing metanotes). Hackability Denote’s code base consists of small
+and reusable functions. They all have documentation strings. The idea is to
+make it easier for users of varying levels of expertise to understand what is
+going on and make surgical interventions where necessary (e.g. to tweak some
+formatting). In this manual, we provide concrete examples on such user-level
+configurations (Keep a journal or diary).
+
+Now the important part… “Denote” is the familiar word, though it also is a
+play on the “note” concept. Plus, we can come up with acronyms, recursive or
+otherwise, of increasingly dubious utility like:
+
+    Don’t Ever Note Only The Epiphenomenal Denote Everything Neatly; Omit The
+    Excesses
+
+But we’ll let you get back to work. Don’t Eschew or Neglect your Obligations,
+Tasks, and Engagements.
+
+==============================================================================
+2. Setup                                                        *denote-setup*
+
+TODO
+
+
+==============================================================================
+3. API                                                            *denote-api*
+
+TODO
+
+==============================================================================
+4. Integrations                                          *denote-integrations*
+
+                                                                  *denote-oil*
+4.1 stevearc/oil.nvim ~
+
+This integration enhances the functionality of `denote` within `oil` filetype
+buffers by implementing custom syntax highlighting for the various components
+of the Denote file naming convention. It aims to improve the visual clarity
+and user experience when navigating and managing Denote files through the Oil
+file explorer interface.
+
+To enable, add to your `denote.nvim` configuration the following: >lua
+    opts = {
+      ...
+      integrations = {
+        oil = true
+      }
+    }
+<
+
+The default highlight groups are defined as follows: >vim
+    hi def link DenoteDate      Number
+    hi def link DenoteSignature Special
+    hi def link DenoteTitle     Title
+    hi def link DenoteKeywords  Tag
+    hi def link DenoteExtension Comment
+<
+To overwrite or clear this groups, refer to |highlight|.
+
+-----------------------------------------------------------------------------
+
+                                                           *denote-telescope*
+4.1 nvim-telescope/telescope.nvim ~
+
+This module provides a Telescope integration for the Denote plugin, allowing
+users to search and navigate Denote files using Telescope's interface.
+
+Enabling this integrations will override the default behaviour for the
+following Denote commands:
+
+- `search`
+- `insert-link`
+- `link`
+
+SETUP                                                 *denote-telescope-setup*
+
+To enable this integration, add to your `denote.nvim` configuration the
+following: >lua
+    opts = {
+      ...
+      integrations = {
+        telescope = true
+      }
+    }
+<
+
+This will enable the integration with it's default configuration, which is
+the following: >lua
+    opts = {
+        ...
+        integrations = {
+            telescope = {
+                enabled = true,
+                opts = {}
+            }
+        }
+    }
+<
+
+You can customize the look and feel of the picker by provinding options inside
+the `integrations.telescope.opts` table. For more information refer to
+|telescope|.
+
+OPTIONS                                             *denote-telescope-options*
+
+{enabled}
+    Whether the integration is enabled.
+
+{opts}
+    The options to pass to the custom picker.
+
+USAGE                                                 *denote-telescope-usage*
+
+After setup, you can use the following excommands:
+>vim
+    Denote search        " Search file in denote silo
+
+    Denote insert-link   " Insert link to denote file in an interactive manner
+
+    Denote link          " Insert link to denote file in an non-interactive manner
+<
+This will open a Telescope picker to handle this interactions.
+
+DISPLAY FORMAT                                      *denote-telescope-display*
+
+The Telescope picker displays the following information, in the following
+order, for each Denote file:
+
+    1. Timestamp
+    2. Signature
+    3. Title
+    4. Keywords
+    5. File extension
+
+As a fallback, the Telescope picker will display just the filename in the case
+the file is non-compliant with the standard Denote format.
+
+Each component is highlighted differently for easy recognition. The default
+highlight groups are defined as follows: 
+>vim
+    hi def link DenoteDate      Number
+    hi def link DenoteSignature Special
+    hi def link DenoteTitle     Title
+    hi def link DenoteKeywords  Tag
+    hi def link DenoteExtension Comment
+<
+To overwrite or clear this groups, refer to |highlight|.
+
+REQUIREMENTS                                    *denote-telescope-requirements*
+
+This integrations requires the Telescope plugin to be installed and available.
+If Telescope is not found, an error will be raised.
+
+==============================================================================
+                                                                   *changelog*
+
+TODO
+
+vim:tw=78:ts=8:et:sw=4:ft=help:norl:

@@ -34,13 +34,9 @@ Example config via [lazy.nvim](https://github.com/folke/lazy.nvim)
   opts = {
     ext = "md",             -- Note file extension (e.g. md, org, norg, txt)
     dir = "~/notes",        -- Notes directory (should already exist)
-    add_heading = true,     -- Add a md/org heading to new notes
-    retitle_heading = true, -- Replace the first line heading when retitling
   },
 },
 ```
-
-The heading options automatically support Markdown (#) and Org/Norg (*) headings.
 
 ## Keymaps
 
@@ -70,8 +66,6 @@ Add the following to `~/.config/nvim/init.lua`
 require("denote").setup({
   ext = "md",
   dir = "~/notes",
-  add_heading = true,
-  retitle_heading = true,
 })
 ```
 
@@ -83,7 +77,6 @@ require("denote").setup({
 :Denote note
 
 " Renames the current note with the new title
-" If `retitle_heading` is true, overwrites the first line heading as well
 :Denote title
 
 " Renames the current note with the new list of keywords (space delimited)
@@ -103,21 +96,22 @@ require("denote").setup({
     - [ ] Rewrite `:h denote`
     - [ ] Add API usage examples
 - [ ] House-keeping
-    - [ ] Refactor and clean-up code
-    - [ ] Change `setup` logic
+    - [x] Refactor and clean-up code
+    - [x] Complete modular rewrite
+    - [x] Change `setup` logic
     - [ ] Add types
     - [ ] Add docstrings
     - [ ] Add logging
     - [ ] Add tests
-- [ ] [Points of entry](https://protesilaos.com/emacs/denote#h:17896c8c-d97a-4faa-abf6-31df99746ca6)
-    - [ ] Implement [The `denote-prompts` option](https://protesilaos.com/emacs/denote#h:f9204f1f-fcee-49b1-8081-16a08a338099)
+- [x] [Points of entry](https://protesilaos.com/emacs/denote#h:17896c8c-d97a-4faa-abf6-31df99746ca6)
+    - [x] Implement [The `denote-prompts` option](https://protesilaos.com/emacs/denote#h:f9204f1f-fcee-49b1-8081-16a08a338099)
 - [ ] [Front mattter](https://protesilaos.com/emacs/denote#h:13218826-56a5-482a-9b91-5b6de4f14261)
     - [ ] Front matter generator for `org`, `markdown` and `text`
     - [ ] Front matter format (`denote-{org,text,toml,yaml}-front-matter`)
     - [ ] Regenerate front matter (`denote-add-front-matter`)
-- [ ] Extensions
-    - [ ] Custom highlighting in oil.nvim ([Fontification in Dired](https://protesilaos.com/emacs/denote#h:337f9cf0-9f66-45af-b73f-f6370472fb51))
-    - [ ] Search capabilities with telescope.nvim
+- [x] Extensions
+    - [x] Custom highlighting in oil.nvim ([Fontification in Dired](https://protesilaos.com/emacs/denote#h:337f9cf0-9f66-45af-b73f-f6370472fb51))
+    - [x] Search capabilities with telescope.nvim
 
 # Credits
 

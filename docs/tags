@@ -1,0 +1,13 @@
+changelog	denote.txt	/*changelog*
+denote-api	denote.txt	/*denote-api*
+denote-integrations	denote.txt	/*denote-integrations*
+denote-oil	denote.txt	/*denote-oil*
+denote-overview	denote.txt	/*denote-overview*
+denote-setup	denote.txt	/*denote-setup*
+denote-telescope	denote.txt	/*denote-telescope*
+denote-telescope-display	denote.txt	/*denote-telescope-display*
+denote-telescope-options	denote.txt	/*denote-telescope-options*
+denote-telescope-requirements	denote.txt	/*denote-telescope-requirements*
+denote-telescope-setup	denote.txt	/*denote-telescope-setup*
+denote-telescope-usage	denote.txt	/*denote-telescope-usage*
+denote.nvim	denote.txt	/*denote.nvim*
