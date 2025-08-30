@@ -1,8 +1,10 @@
 # denote.nvim
 
-This Neovim plugin provides a command `:Denote note` that prompts for a title and keywords
-(tags), then creates a new file in a flat notes directory using the [Emacs Denote package's
-file-naming scheme](https://protesilaos.com/emacs/denote#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5d):
+This Neovim plugin provides a command `:Denote` that contains subcommands to create and rename
+text files in a flat notes directory using the [Emacs Denote package's file-naming
+scheme](https://protesilaos.com/emacs/denote#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5).
+
+The file-naming scheme is as follows:
 
 `DATE==SIGNATURE--TITLE__KEYWORDS.EXTENSION`
 
@@ -16,78 +18,107 @@ For example:
 20240601T213392==1a1--i-have-a-signature__denote.csv
 ```
 
-That's all this does: create and consistently rename text files using the above scheme. No
-frontmatter, links, etc. I have overcomplicated my notes too many times with fancy Org Mode and
-Zettelkasten systems and this is my minimalist endgame.
+# Features
 
-The file-naming should be 1:1 with denote.el, down to minor things like triming/combining excess
-whitespace, removing special characters, disallowing multi-word keywords, and separating
-signature terms with = (e.g. `==three=word=sig`).
+- Single access point for all functionality via the `:Denote` command
+- Create new notes interactively
+- Extensions for integrating with other plugins (e.g. telescope.nvim)
 
 # Installation / Config
 
 Example config via [lazy.nvim](https://github.com/folke/lazy.nvim)
 
 ```lua
+---@class Denote.Integrations.Telescope.Configuration
+---@field enabled boolean
+---@field opts table?
+
+---@class Denote.Integrations.Configuration
+---@field oil boolean Activate `stevearc/oil.nvim` extension
+---@field telescope boolean|Denote.Integrations.Telescope.Configuration
+
+---@class Denote.Configuration
+---@field filetype string? Default note file type
+---@field directory string? Denote files directory
+---@field prompts string[]? File creation/renaming prompt order
+---@field integrations Denote.Integrations.Configuration? Extensions configuration
+
+--@type Denote.Configuration
 {
-  "cvigilv/denote.nvim",
-  opts = {
-    ext = "md",             -- Note file extension (e.g. md, org, norg, txt)
-    dir = "~/notes",        -- Notes directory (should already exist)
+  filetype = "md",
+  directory = "~/notes/",
+  prompts = { "title", "keywords" },
+  integrations = {
+    oil = false,
+    telescope = false,
   },
-},
+}
 ```
 
-## Keymaps
-
-Maybe you want to set keymaps for the commands as well
+On setup, the plugin will create a global variable `denote` that contains the configuration
+table, which can be employed for extensions or other custom functionality:
 
 ```lua
-vim.keymap.set({'n','v'}, '<leader>nn', ":Denote note<cr>",      { desc = "New note"         })
-vim.keymap.set({'n','v'}, '<leader>nt', ":Denote title<cr>",     { desc = "Change title"     })
-vim.keymap.set({'n','v'}, '<leader>nk', ":Denote keywords<cr>",  { desc = "Change keywords"  })
-vim.keymap.set({'n','v'}, '<leader>nz', ":Denote signature<cr>", { desc = "Change signature" })
-vim.keymap.set({'n','v'}, '<leader>ne', ":Denote extension<cr>", { desc = "Change extension" })
-```
-
-## Manual Install
-
-To install without a plugin manager:
-
-```bash
-mkdir -p ~/.local/share/nvim/site/pack/denote.nvim/start
-cd ~/.local/share/nvim/site/pack/denote.nvim/start
-git clone https://github.com/cvigilv/denote.nvim.git
-```
-
-Add the following to `~/.config/nvim/init.lua`
-
-```lua
-require("denote").setup({
-  ext = "md",
-  dir = "~/notes",
-})
+_G.denote.config
 ```
 
 # :Denote Command
 
+Currently, the `:Denote` command supports the following subcommands:
+
 ```vim
-" Creates a new note in the `dir` directory with `ext` extension
-" Keywords are space delimited. The title or keywords can be blank.
-:Denote note
+" Creates a new note interactively
+:Denote
+
+" Renames the current note interactively
+:Denote rename-file
 
 " Renames the current note with the new title
-:Denote title
+:Denote rename-file-title
+:Denote rename-file-title
 
 " Renames the current note with the new list of keywords (space delimited)
-:Denote keywords
+:Denote rename-file-keywords
 
 " Rename the current note with a signature
 " This has a user-defined meaning and no particular purpose
-:Denote signature
+:Denote rename-file-signature
+```
+# Extensions
 
-" Rename the current file to a new extension
-:Denote extension
+## stevearc/oil.nvim
+
+If you use [stevearc/oil.nvim](https://github.com/stevearc/oil.nvim) to manage your files, you
+can enable the `oil` extension in the configuration. This will add custom highlighting to files
+that follow the Denote file-naming scheme.
+
+> Note: the highighting is only applied when the `oil` extension is enabled in the config, but
+> it will highlight any file that follows the scheme, regardless of the directory.
+
+## nvim-telescope/telescope.nvim
+
+If you use [nvim-telescope/telescope.nvim](https://github.com/nvim-telescope/telescope.nvim),
+you can enable the `telescope` extension in the configuration. This will add the `:Denote
+search`, `:Denote insert-link`, and `:Denote link` commands, which will open a picker to search
+and insert links to existing buffer.
+
+## nvim-orgmode/orgmode
+
+if you use [nvim-orgmode/orgmode](https://github.com/nvim-orgmode/orgmode), you can enale the
+`[[denote:...]]` link format. This is done by adding the following to your orgmode
+configuration:
+
+```lua
+require("orgmode").setup({
+  -- your config...
+  hyperlinks = {
+    sources = {
+      require("denote.extensions.orgmode"):new({
+        files = _G.denote.config.directory,
+      }),
+    },
+  },
+})
 ```
 
 # Road map

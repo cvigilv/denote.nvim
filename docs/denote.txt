@@ -1,4 +1,4 @@
-*denote.nvim*	Simple notes for Emacs with an efficient file-naming scheme
+*denote.nvim*   Simple notes for Emacs with an efficient file-naming scheme
 
 ==============================================================================
 1. Overview                                                  *denote-overview*
