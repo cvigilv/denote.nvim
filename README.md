@@ -66,24 +66,12 @@ _G.denote.config
 
 Currently, the `:Denote` command supports the following subcommands:
 
-```vim
-" Creates a new note interactively
-:Denote
+- `:Denote`, create a new note interactively
+- `:Denote rename-file`, renames the current note interactively
+- `:Denote rename-file-title`, change the title of the current note
+- `:Denote rename-file-keywords`, change the keyworks of the current note
+- `:Denote rename-file-signature`,  change the signature of the current note
 
-" Renames the current note interactively
-:Denote rename-file
-
-" Renames the current note with the new title
-:Denote rename-file-title
-:Denote rename-file-title
-
-" Renames the current note with the new list of keywords (space delimited)
-:Denote rename-file-keywords
-
-" Rename the current note with a signature
-" This has a user-defined meaning and no particular purpose
-:Denote rename-file-signature
-```
 # Extensions
 
 ## stevearc/oil.nvim
@@ -95,12 +83,16 @@ that follow the Denote file-naming scheme.
 > Note: the highighting is only applied when the `oil` extension is enabled in the config, but
 > it will highlight any file that follows the scheme, regardless of the directory.
 
+<img width="1031" height="806" alt="stevearc/oil.nvim highlighting" src="https://github.com/user-attachments/assets/377adb4a-8060-4c8d-a03f-c3e41b2effba" />
+
 ## nvim-telescope/telescope.nvim
 
 If you use [nvim-telescope/telescope.nvim](https://github.com/nvim-telescope/telescope.nvim),
 you can enable the `telescope` extension in the configuration. This will add the `:Denote
 search`, `:Denote insert-link`, and `:Denote link` commands, which will open a picker to search
 and insert links to existing buffer.
+
+<img width="1031" height="806" alt="Simple telescope.nvim search" src="https://github.com/user-attachments/assets/6a29e965-0268-40a6-9ae5-d93bd17859df" />
 
 ## nvim-orgmode/orgmode
 
