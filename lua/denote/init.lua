@@ -13,7 +13,7 @@ function M.setup(options)
   if options.integrations.oil then
     require("denote.extensions.oil").setup(options)
   end
-  if options.integrations.telescope then
+  if options.integrations.telescope.enabled then
     require("denote.extensions.telescope").setup(options)
   end
 
