@@ -92,7 +92,6 @@ function M.generate_filename(components)
     error("[denote] No components provided to generate Denote compliant filename")
     return nil
   end
-  vim.print(components)
   local filename = components.identifier
     .. M.as_component_string(components.signature or "", "signature")
     .. M.as_component_string(components.title or "", "title")

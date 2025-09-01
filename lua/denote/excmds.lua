@@ -10,7 +10,6 @@ local M = {}
 ---@param options Denote.Configuration User provided configuration table
 M.setup = function(options)
   vim.api.nvim_create_user_command("Denote", function(opts)
-    vim.print(opts)
     -- Core
     local cmd = opts.fargs
     if #cmd == 0 then
