@@ -216,11 +216,11 @@ M.setup = function(opts)
               local description
 
               if not is_multiple and interactive then
+                local fields = frontmatter.parse_frontmatter(entry.path, filetype)
+                  or Naming.parse_filename(entry.path, false)
                 description = vim.fn.input({
                   prompt = "[denote] Link description: ",
-                  default = frontmatter.parse_frontmatter(entry.path, filetype)["title"]
-                    or Naming.parse_filename(entry.path, false)["title"]:gsub("-", " ")
-                    or "",
+                  default = fields.title or "",
                 })
               else
                 description = frontmatter.parse_frontmatter(entry.path, filetype)["identifier"]
