@@ -1,4 +1,4 @@
-local CONFIG = _G.denote.config
+local CONFIG = vim.g.denote
 local Naming = require("denote.naming")
 
 ---@class OrgLinkDenote:OrgLinkType

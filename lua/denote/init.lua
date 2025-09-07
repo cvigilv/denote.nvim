@@ -1,24 +1,21 @@
-local M = {}
+---@module "denote"
+---@author Carlos Vigil-Vásquez
+---@license MIT 2025
 
----@param options? Denote.Configuration User configuration
-function M.setup(options)
-  -- Initialize global state
-  _G.denote = {}
-
+-- Create autocommand to
+if not vim.g.loaded_denote_plugin then
   -- Update configuration and store in global state
-  options = require("denote.config").update_config(options)
-  _G.denote.config = options
+  ---@diagnostic disable-next-line: undefined-field
+  _G.denote = require("denote.config").update_config(_G.denote)
 
-  -- Initialize extensions
-  if options.integrations.oil then
-    require("denote.extensions.oil").setup(options)
-  end
-  if options.integrations.telescope.enabled then
-    require("denote.extensions.telescope").setup(options)
-  end
+  require("denote.autocmd").setup()
 
-  require("denote.usercmd").setup(options)
-  require("denote.autocmd").setup(options)
+  -- -- Initialize extensions
+  -- if options.integrations.oil then
+  --   require("denote.extensions.oil").setup(options)
+  -- end
+  -- if options.integrations.telescope.enabled then
+  --   require("denote.extensions.telescope").setup(options)
+  -- end
 end
-
-return M
+vim.g.loaded_denote_plugin = true

@@ -5,8 +5,11 @@
 local M = {}
 
 ---@param opts Denote.Configuration User configuration
-M.setup = function(opts)
+M.setup = function()
+  local opts = _G.denote
   local augroup = vim.api.nvim_create_augroup("denote", { clear = true })
+
+  -- File detection
   vim.api.nvim_create_autocmd({ "BufReadPost", "BufNewFile" }, {
     pattern = opts.directory .. "*",
     group = augroup,
@@ -15,6 +18,8 @@ M.setup = function(opts)
       vim.bo[args.buf].filetype = vim.bo[args.buf].filetype .. ".denote"
     end,
   })
+
+  -- File cache
 end
 
 return M
