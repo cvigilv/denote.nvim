@@ -17,8 +17,8 @@ function M.setup(options)
     require("denote.extensions.telescope").setup(options)
   end
 
-  -- Initialize excommands
-  require("denote.excmds").setup(options)
+  require("denote.usercmd").setup(options)
+  require("denote.autocmd").setup(options)
 end
 
 return M
