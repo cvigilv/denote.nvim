@@ -226,5 +226,58 @@ return require("telescope").register_extension({
         })
         :find()
     end,
+    backlinks = function()
+      local entry_display = require("telescope.pickers.entry_display")
+      local finders = require("telescope.finders")
+      local pickers = require("telescope.pickers")
+      local conf = require("telescope.config").values
+
+      require("denote.ui.highlights").setup()
+      local options = vim.g.denote
+      -- Define how to build entry for Telescope
+      local make_display = function(entry)
+        local components = format_entry(entry.value)
+
+        local displayer = entry_display.create({
+          separator = " ",
+          items = { {}, {}, {}, {}, {}, {} },
+        })
+
+        return displayer({
+          { components.identifier or "", "DenoteDate" },
+          { components.signature or "", "DenoteSignature" },
+          { components.title or "", "DenoteTitle" },
+          { components.keywords or "", "DenoteKeyword" },
+          { components.extension or "", "DenoteExtension" },
+          { components.filename or "", "Comment" },
+        })
+      end
+
+      local files = vim
+        .iter(require("denote.links").get_backlinks(vim.api.nvim_buf_get_name(0)))
+        :map(function(l)
+          return l.filename
+        end)
+        :totable()
+
+      pickers
+        .new({}, {
+          prompt_title = "Backlinks",
+          finder = finders.new_table({
+            results = files,
+            entry_maker = function(entry)
+              return {
+                value = entry,
+                display = make_display,
+                ordinal = entry,
+                path = entry,
+              }
+            end,
+          }),
+          sorter = conf.file_sorter({}),
+          previewer = conf.file_previewer({}),
+        })
+        :find()
+    end,
   },
 })

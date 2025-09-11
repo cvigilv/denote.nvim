@@ -95,6 +95,7 @@ telescope. Currently, the following pickers are implemented:
 - `:Telescope denote search`, for searching notes in you Denote silo
 - `:Telescope denote insert-link`, for inserting links interactively
 - `:Telescope denote link`, for inserting links
+- `:Telescope denote backlinks`, for searching backlinks of current buffer
 
 <img width="1031" height="806" alt="Simple telescope.nvim search" src="https://github.com/user-attachments/assets/6a29e965-0268-40a6-9ae5-d93bd17859df" />
 
