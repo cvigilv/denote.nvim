@@ -16,13 +16,8 @@ vim.api.nvim_create_user_command("Denote", function(opts)
     require("denote.api").rename_file_keywords()
   elseif cmd[1] == "rename-file-signature" then
     require("denote.api").rename_file_signature()
-    -- Telescope integrations
-  elseif cmd[1] == "search" and options.integrations.telescope.enabled then
-    require("denote.extensions.telescope").search(options)
-  elseif cmd[1] == "insert-link" and options.integrations.telescope.enabled then
-    require("denote.extensions.telescope").insert_link(options, true)
-  elseif cmd[1] == "link" and options.integrations.telescope.enabled then
-    require("denote.extensions.telescope").insert_link(options, false)
+  elseif cmd[1] == "backlinks" then
+    require("denote.api").backlinks()
   else
     error("[denote] Unsupported operation " .. opts.fargs[1])
   end
@@ -37,6 +32,7 @@ end, {
       "rename-file-title",
       "rename-file-keywords",
       "rename-file-signature",
+      "backlinks",
     }
 
     -- Integrations

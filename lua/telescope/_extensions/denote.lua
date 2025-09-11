@@ -2,20 +2,9 @@
 ---@author Carlos Vigil-Vásquez
 ---@license MIT 2025
 
-local Naming = require("denote.naming")
-local Frontmatter = require("denote.frontmatter")
-local entry_display = require("telescope.pickers.entry_display")
-local finders = require("telescope.finders")
-local pickers = require("telescope.pickers")
-local conf = require("telescope.config").values
-local actions = require("telescope.actions")
-local action_state = require("telescope.actions.state")
-
-require("denote.ui.highlights").setup()
-
-local options = vim.g.denote
-
 local function format_entry(filepath)
+  local Naming = require("denote.naming")
+  local Frontmatter = require("denote.frontmatter")
   -- Initialize results table
   local results = {}
 
@@ -54,6 +43,13 @@ end
 return require("telescope").register_extension({
   exports = {
     search = function()
+      local entry_display = require("telescope.pickers.entry_display")
+      local finders = require("telescope.finders")
+      local pickers = require("telescope.pickers")
+      local conf = require("telescope.config").values
+
+      require("denote.ui.highlights").setup()
+      local options = vim.g.denote
       -- Define how to build entry for Telescope
       local make_display = function(entry)
         local components = format_entry(entry.value)
@@ -95,6 +91,17 @@ return require("telescope").register_extension({
         :find()
     end,
     insert_link = function(interactive)
+      local Naming = require("denote.naming")
+      local Frontmatter = require("denote.frontmatter")
+      local entry_display = require("telescope.pickers.entry_display")
+      local finders = require("telescope.finders")
+      local pickers = require("telescope.pickers")
+      local conf = require("telescope.config").values
+      local actions = require("telescope.actions")
+      local action_state = require("telescope.actions.state")
+      require("denote.ui.highlights").setup()
+      local options = vim.g.denote
+
       -- Define how to build entry for Telescope
       local make_display = function(entry)
         local components = format_entry(entry.value)

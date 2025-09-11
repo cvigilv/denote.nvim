@@ -14,4 +14,13 @@ function M.replace_file(old_filename, new_filename)
   end
 end
 
+--- Gets `target` path relative to `base`, or `nil` if `base` is not an ancestor.
+---@param base string? Base path (default: current path)
+---@param target string
+---@return string|nil relpath
+function M.get_relative_path(base, target)
+  base = base or vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":p:h")
+  return vim.fs.relpath(vim.fs.normalize(base), vim.fs.normalize(target))
+end
+
 return M

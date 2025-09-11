@@ -19,7 +19,7 @@ local M = {}
 
 -- Create a new note interactively
 function M.denote()
-  local opts = _G.denote.config
+  local opts = vim.g.denote
   -- Define base fields
   local identifier = Naming.generate_timestamp()
   local fields = {
@@ -56,7 +56,6 @@ function M.rename_file_title(filename, title)
 
   local components = Naming.parse_filename(filename, false)
   components.title = title or Prompts.title(filename, components)
-  components.title = Naming.as_component_string(components.title, "title")
   local new_filename = Naming.generate_filename(components)
 
   if filename ~= nil then
@@ -81,7 +80,6 @@ function M.rename_file_signature(filename, signature)
 
   local components = Naming.parse_filename(filename, false)
   components.signature = signature or Prompts.signature(filename, components)
-  components.signature = Naming.as_component_string(components.signature, "signature")
   local new_filename = Naming.generate_filename(components)
 
   if filename ~= nil then
@@ -106,7 +104,6 @@ function M.rename_file_keywords(filename, keywords)
 
   local components = Naming.parse_filename(filename, false)
   components.keywords = keywords or Prompts.keywords(filename, components)
-  components.keywords = Naming.as_component_string(components.keywords, "keywords")
   local new_filename = Naming.generate_filename(components)
 
   if filename ~= nil then
@@ -125,22 +122,17 @@ function M.rename_file(filename)
   -- Parse filename to get current fields
   filename = filename or vim.fn.expand("%:p")
   -- Get file info and store as temporal fields
-  local fields = vim.tbl_extend(
-    "force",
-    {},
-    {
-      identifier = Naming.generate_timestamp(filename) or "",
-      title = Naming.as_component_string(vim.fn.fnamemodify(filename, ":t:r"), "title") or "",
-      date = "",
-      keywords = "",
-      signature = "",
-      extension = vim.fn.fnamemodify(filename, ":e"),
-    },
-    Naming.parse_filename(filename, false)
-  )
+  local fields = vim.tbl_extend("force", {}, {
+    identifier = Naming.generate_timestamp(filename) or "",
+    title = Naming.as_component_string(vim.fn.fnamemodify(filename, ":t:r"), "title") or "",
+    date = "",
+    keywords = "",
+    signature = "",
+    extension = vim.fn.fnamemodify(filename, ":e"),
+  }, Naming.parse_filename(filename, false))
   -- Prompt user for fields
-  for _, field in ipairs(_G.denote.config.prompts) do
-    fields[field] = Naming.as_component_string(Prompts[field](filename, fields), field)
+  for _, field in ipairs(vim.g.denote.prompts) do
+    fields[field] = Prompts[field](filename, fields)
   end
   -- Generate new filename
   local new_filename = Naming.generate_filename(fields) --[[@as string]]
@@ -157,4 +149,18 @@ function M.rename_file(filename)
   end
 end
 
+---Populate loclist with backlinks of current buffer.
+function M.backlinks()
+  local filename = vim.fn.expand("%:p")
+  -- {
+  --   filename = "utils.lua",
+  --   lnum = 20,
+  --   col = 0,
+  --   text = "Another message",
+  --   type = "W",
+  -- },
+  local backlinks = require("denote.links").get_backlinks(filename)
+  vim.fn.setloclist(vim.api.nvim_get_current_win(), backlinks, "r")
+  vim.cmd("lopen")
+end
 return M

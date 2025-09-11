@@ -1,4 +1,4 @@
----@module "denote.helpers.prompts"
+---@module "denote.ui.prompts"
 ---@author Carlos Vigil-Vásquez
 ---@license MIT 2025
 
