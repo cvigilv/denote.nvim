@@ -44,7 +44,7 @@ Example config via [lazy.nvim](https://github.com/folke/lazy.nvim)
 ---@field integrations Denote.Integrations.Configuration? Extensions configuration
 
 --@type Denote.Configuration
-{
+vim.g.denote = {
   filetype = "md",
   directory = "~/notes/",
   prompts = { "title", "keywords" },
@@ -59,7 +59,7 @@ On setup, the plugin will create a global variable `denote` that contains the co
 table, which can be employed for extensions or other custom functionality:
 
 ```lua
-_G.denote.config
+vim.g.denote
 ```
 
 # :Denote Command
@@ -69,18 +69,19 @@ Currently, the `:Denote` command supports the following subcommands:
 - `:Denote`, create a new note interactively
 - `:Denote rename-file`, renames the current note interactively
 - `:Denote rename-file-title`, change the title of the current note
-- `:Denote rename-file-keywords`, change the keyworks of the current note
-- `:Denote rename-file-signature`,  change the signature of the current note
+- `:Denote rename-file-keywords`, change the keywords of the current note
+- `:Denote rename-file-signature`, change the signature of the current note
+- `:Denote backlinks`, populates and opens loclist with backlinks to current note
 
 # Extensions
 
 ## stevearc/oil.nvim
 
-If you use [stevearc/oil.nvim](https://github.com/stevearc/oil.nvim) to manage your files, you
-can enable the `oil` extension in the configuration. This will add custom highlighting to files
-that follow the Denote file-naming scheme.
+If you use [stevearc/oil.nvim](https://github.com/stevearc/oil.nvim) to manage your files, this
+extension will automatically setup custom highlighting to files that follow the Denote file-naming scheme
+whenever you open an `oil` buffer on the directory set in `vim.g.denote`.
 
-> Note: the highighting is only applied when the `oil` extension is enabled in the config, but
+> Note: the highlighting is only applied when the `oil` extension is enabled in the config, but
 > it will highlight any file that follows the scheme, regardless of the directory.
 
 <img width="1031" height="806" alt="stevearc/oil.nvim highlighting" src="https://github.com/user-attachments/assets/377adb4a-8060-4c8d-a03f-c3e41b2effba" />
@@ -88,15 +89,18 @@ that follow the Denote file-naming scheme.
 ## nvim-telescope/telescope.nvim
 
 If you use [nvim-telescope/telescope.nvim](https://github.com/nvim-telescope/telescope.nvim),
-you can enable the `telescope` extension in the configuration. This will add the `:Denote
-search`, `:Denote insert-link`, and `:Denote link` commands, which will open a picker to search
-and insert links to existing buffer.
+you can register the `telescope` extension to access to some functionality directly from
+telescope. Currently, the following pickers are implemented:
+
+- `:Telescope denote search`, for searching notes in you Denote silo
+- `:Telescope denote insert-link`, for inserting links interactively
+- `:Telescope denote link`, for inserting links
 
 <img width="1031" height="806" alt="Simple telescope.nvim search" src="https://github.com/user-attachments/assets/6a29e965-0268-40a6-9ae5-d93bd17859df" />
 
 ## nvim-orgmode/orgmode
 
-if you use [nvim-orgmode/orgmode](https://github.com/nvim-orgmode/orgmode), you can enale the
+if you use [nvim-orgmode/orgmode](https://github.com/nvim-orgmode/orgmode), you can enable the
 `[[denote:...]]` link format. This is done by adding the following to your orgmode
 configuration:
 
@@ -106,36 +110,12 @@ require("orgmode").setup({
   hyperlinks = {
     sources = {
       require("denote.extensions.orgmode"):new({
-        files = _G.denote.config.directory,
+        files = vim.g.denote.directory
       }),
     },
   },
 })
 ```
-
-# Road map
-
-- [ ] Documentation
-    - [ ] Rewrite `:h denote`
-    - [ ] Add API usage examples
-- [ ] House-keeping
-    - [x] Refactor and clean-up code
-    - [x] Complete modular rewrite
-    - [x] Change `setup` logic
-    - [ ] Add types
-    - [ ] Add docstrings
-    - [ ] Add logging
-    - [ ] Add tests
-- [x] [Points of entry](https://protesilaos.com/emacs/denote#h:17896c8c-d97a-4faa-abf6-31df99746ca6)
-    - [x] Implement [The `denote-prompts` option](https://protesilaos.com/emacs/denote#h:f9204f1f-fcee-49b1-8081-16a08a338099)
-- [ ] [Front mattter](https://protesilaos.com/emacs/denote#h:13218826-56a5-482a-9b91-5b6de4f14261)
-    - [ ] Front matter generator for `org`, `markdown` and `text`
-    - [ ] Front matter format (`denote-{org,text,toml,yaml}-front-matter`)
-    - [ ] Regenerate front matter (`denote-add-front-matter`)
-- [x] Extensions
-    - [x] Custom highlighting in oil.nvim ([Fontification in Dired](https://protesilaos.com/emacs/denote#h:337f9cf0-9f66-45af-b73f-f6370472fb51))
-    - [x] Search capabilities with telescope.nvim
-
 # Credits
 
 * [historia/simple-denote.nivm](https://codeberg.org/historia/simple-denote.nvim) - This is a
