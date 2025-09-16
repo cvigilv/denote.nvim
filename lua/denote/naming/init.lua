@@ -116,6 +116,7 @@ function M.as_component_string(str, type)
   end
   -- Plain format string and replace spaces with separator character
   local char = M.SEPARATORS[type]
+  str = str:gsub(char, " ")
   str = String.trim(str)
   str = String.sanitize(str)
   str = string.format("%s%s%s", char, char, str:gsub("%s", char))
