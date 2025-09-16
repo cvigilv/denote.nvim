@@ -82,14 +82,14 @@ end
 local default_config = {
   -- Should print the output to neovim while running.
   -- values: 'sync','async',false
-  use_console = "async",
+  use_console = false,
 
   -- Should highlighting be used in console (using echohl).
   highlights = true,
 
   -- Should write to a file.
   -- Default output for logging file is `stdpath("cache")/plugin`.
-  use_file = false,
+  use_file = true,
 
   -- Should write to the quickfix list.
   use_quickfix = false,
