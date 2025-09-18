@@ -34,8 +34,6 @@
 -- • denote-retrieve-xref-alist-for-backlinks - Get xref data for backlink locations
 -- • denote-fontify-links - Add syntax highlighting to links in buffer
 
-local logger = require("denote.core.logger")
-
 local function format_link(description, path, filetype)
   local link
   if string.match(filetype, "markdown") then
