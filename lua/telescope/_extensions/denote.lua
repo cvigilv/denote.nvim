@@ -42,7 +42,7 @@ end
 
 return require("telescope").register_extension({
   exports = {
-    search = function()
+    search = function(opts)
       local entry_display = require("telescope.pickers.entry_display")
       local finders = require("telescope.finders")
       local pickers = require("telescope.pickers")
@@ -72,7 +72,7 @@ return require("telescope").register_extension({
       local files = vim.fn.glob(options.directory .. "/*", false, true)
 
       pickers
-        .new({}, {
+        .new(opts, {
           prompt_title = "Find Denote Files",
           finder = finders.new_table({
             results = files,
@@ -90,7 +90,7 @@ return require("telescope").register_extension({
         })
         :find()
     end,
-    insert_link = function(interactive)
+    insert_link = function(opts)
       local Naming = require("denote.naming")
       local Frontmatter = require("denote.frontmatter")
       local entry_display = require("telescope.pickers.entry_display")
@@ -125,7 +125,7 @@ return require("telescope").register_extension({
       local bufnr = vim.api.nvim_get_current_buf()
 
       pickers
-        .new({}, {
+        .new(opts, {
           prompt_title = "Insert link to Denote file",
           finder = finders.new_table({
             results = files,
@@ -200,7 +200,7 @@ return require("telescope").register_extension({
                 local path = get_relative_path(entry.path)
                 local description
 
-                if not is_multiple and interactive then
+                if not is_multiple then
                   local fields = Frontmatter.parse_frontmatter(entry.path, filetype)
                     or Naming.parse_filename(entry.path, false)
                   description = vim.fn.input({
@@ -226,14 +226,13 @@ return require("telescope").register_extension({
         })
         :find()
     end,
-    backlinks = function()
+    backlinks = function(opts)
       local entry_display = require("telescope.pickers.entry_display")
       local finders = require("telescope.finders")
       local pickers = require("telescope.pickers")
       local conf = require("telescope.config").values
 
       require("denote.ui.highlights").setup()
-      local options = vim.g.denote
       -- Define how to build entry for Telescope
       local make_display = function(entry)
         local components = format_entry(entry.value)
@@ -261,7 +260,7 @@ return require("telescope").register_extension({
         :totable()
 
       pickers
-        .new({}, {
+        .new(opts, {
           prompt_title = "Backlinks",
           finder = finders.new_table({
             results = files,
