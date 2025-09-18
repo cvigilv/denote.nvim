@@ -36,7 +36,10 @@ function M.is_denote(filename)
   return false
 end
 
-M.timestamp_to_date = function(timestamp)
+---Convert timestamp into date string
+---@param timestamp string
+---@return string|nil date
+function M.timestamp_to_date(timestamp)
   local pattern = "(%d%d%d%d)(%d%d)(%d%d)T(%d%d)(%d%d)(%d%d)"
   local matches = { string.match(timestamp, pattern) }
   if #matches ~= 6 then
@@ -122,7 +125,6 @@ function M.as_component_string(str, type)
   str = string.format("%s%s%s", char, char, str:gsub("%s", char))
   return str
 end
-
 
 ---Generates a timestamp for a given file based on its creation or modification time. If no file is provided, generate for current time
 ---@param filename string? The path to the file
