@@ -17,13 +17,7 @@ M.setup = function()
     callback = function(args)
       local current_ft = vim.bo[args.buf].filetype
       if not vim.endswith(current_ft, ".denote") then
-        logger.info(
-          "Setting buffer "
-            .. args.buf
-            .. " filetype to "
-            .. current_ft
-            .. ".denote"
-        )
+        logger.info("Setting buffer " .. args.buf .. " filetype to " .. current_ft .. ".denote")
         vim.bo[args.buf].filetype = current_ft .. ".denote"
       end
     end,
@@ -36,17 +30,44 @@ M.setup = function()
     desc = "Populate links cache",
     once = true,
     callback = function()
-      vim.schedule(function()
-        vim
-          .iter(vim.fn.glob(vim.g.denote.directory .. "*", false, true, true))
-          :map(function(filepath)
-            require("denote.links").get_links(filepath)
+      local dir = vim.g.denote.directory --[[@as string]]
+      local uv = vim.loop
+      uv.fs_scandir(dir, function(err, req)
+        if err or not req then
+          vim.schedule(function()
+            require("denote.core.logger").info(
+              "Failed to scan directory: " .. (err or "unknown error"),
+              vim.log.levels.ERROR
+            )
           end)
-        logger.info(
-          "Populated Denote links cache with "
-            .. #vim.tbl_keys(_G.denote_cache_links)
-           .. " links"
-        )
+          return
+        end
+
+        local files = {}
+        while true do
+          local name, typ = uv.fs_scandir_next(req)
+          if not name then
+            break
+          end
+          if typ == "file" then
+            local ext = name:match("%.([^.]+)$")
+            if ext and vim.tbl_contains({"txt", "md", "org", "norg"}, ext) then
+              table.insert(files, dir .. name)
+            end
+          end
+        end
+
+        -- Process files on main thread (for Lua module safety)
+        vim.schedule(function()
+          for _, filepath in ipairs(files) do
+            require("denote.links").get_links(filepath)
+          end
+          vim.notify("pop")
+          local count = #vim.tbl_keys(_G.denote_cache_links or {})
+          require("denote.core.logger").info(
+            "Populated Denote links cache with " .. count .. " links"
+          )
+        end)
       end)
     end,
   })
