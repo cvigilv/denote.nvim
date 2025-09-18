@@ -2,13 +2,14 @@
 ---@author Carlos Vigil-Vásquez
 ---@license MIT 2025
 
-local logger = require("denote.core.logger")
-
 local M = {}
 
 -- Define highlight groups related to Denote
 M.setup = function()
-  logger.info("Setting up highlighting file names for buffer " .. vim.api.nvim_get_current_buf())
+  local logger = require("denote.core.logger")
+  logger.info(
+    "Setting up highlighting file names for buffer " .. vim.api.nvim_get_current_buf()
+  )
   vim.cmd([[
   " Setup highlight groups
   hi def link DenoteDate      Number
