@@ -56,7 +56,13 @@ return require("telescope").register_extension({
 
         local displayer = entry_display.create({
           separator = " ",
-          items = { {}, {}, {}, {}, {}, {} },
+          items = {
+            { width = 15 },
+            { width = 8 },
+            { width = 196 },
+            { width = 24, right_justify = true },
+            { width = 4, right_justify = true },
+          },
         })
 
         return displayer({
@@ -65,7 +71,6 @@ return require("telescope").register_extension({
           { components.title or "", "DenoteTitle" },
           { components.keywords or "", "DenoteKeyword" },
           { components.extension or "", "DenoteExtension" },
-          { components.filename or "", "Comment" },
         })
       end
 
