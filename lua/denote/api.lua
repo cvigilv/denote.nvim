@@ -59,7 +59,8 @@ function M.rename_file_title(filename, title)
   local new_filename = Naming.generate_filename(components)
 
   if filename ~= nil then
-    Filesystem.replace_file(filename, new_filename --[[@as string]])
+    local new_filepath = vim.g.denote.directory .. new_filename
+    Filesystem.replace_file(filename, new_filepath --[[@as string]])
     return true
   else
     error("[denote] Failed to change title of file")
@@ -83,7 +84,8 @@ function M.rename_file_signature(filename, signature)
   local new_filename = Naming.generate_filename(components)
 
   if filename ~= nil then
-    Filesystem.replace_file(filename, new_filename --[[@as string]])
+    local new_filepath = vim.g.denote.directory .. new_filename
+    Filesystem.replace_file(filename, new_filepath --[[@as string]])
     return true
   else
     error("[denote] Failed to change signature of file")
@@ -107,7 +109,8 @@ function M.rename_file_keywords(filename, keywords)
   local new_filename = Naming.generate_filename(components)
 
   if filename ~= nil then
-    Filesystem.replace_file(filename, new_filename --[[@as string]])
+    local new_filepath = vim.g.denote.directory .. new_filename
+    Filesystem.replace_file(filename, new_filepath --[[@as string]])
     return true
   else
     error("[denote] Failed to change keywords of file")
