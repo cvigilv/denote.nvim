@@ -130,7 +130,7 @@ M.generate_org_frontmatter = function(fields)
   end
 
   if fields.signature then
-    table.insert(lines, "#+signature: " .. fields.signature)
+    table.insert(lines, "#+signature:  " .. fields.signature)
   end
 
   return table.concat(lines, "\n") .. "\n"
