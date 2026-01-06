@@ -202,7 +202,7 @@ return require("telescope").register_extension({
               local links = {}
 
               for _, entry in ipairs(entries) do
-                local path = get_relative_path(entry.path)
+                local path = get_relative_path(entry.path) or entry.path
                 local description
 
                 if not is_multiple then
