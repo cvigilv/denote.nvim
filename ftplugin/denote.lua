@@ -28,20 +28,11 @@ end, {
     -- Builtin
     local subcommands = {
       "rename-file",
-      "rename-file",
       "rename-file-title",
       "rename-file-keywords",
       "rename-file-signature",
       "backlinks",
     }
-
-    -- Integrations
-    if options.integrations.telescope.enabled then
-      table.insert(subcommands, "search")
-      table.insert(subcommands, "insert-link")
-      table.insert(subcommands, "link")
-    end
-
     return subcommands
   end,
 })
