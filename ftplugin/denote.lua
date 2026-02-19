@@ -36,3 +36,5 @@ end, {
     return subcommands
   end,
 })
+
+require("denote.lsp").start()

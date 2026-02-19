@@ -153,17 +153,11 @@ function M.rename_file(filename)
 end
 
 ---Populate loclist with backlinks of current buffer.
-function M.backlinks()
-  local filename = vim.fn.expand("%:p")
-  -- {
-  --   filename = "utils.lua",
-  --   lnum = 20,
-  --   col = 0,
-  --   text = "Another message",
-  --   type = "W",
-  -- },
+function M.backlinks(filename)
+  filename = filename or vim.fn.expand("%:p")
   local backlinks = require("denote.links").get_backlinks(filename)
   vim.fn.setloclist(vim.api.nvim_get_current_win(), backlinks, "r")
   vim.cmd("lopen")
 end
+
 return M
