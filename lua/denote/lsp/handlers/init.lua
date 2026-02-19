@@ -5,12 +5,57 @@
 local ms = vim.lsp.protocol.Methods
 local handlers = {}
 
----@param _ lsp.HoverParams
+---@param params lsp.HoverParams
 ---@param callback fun(err?: lsp.ResponseError, result: lsp.Hover)
 handlers[ms.textDocument_hover] = function(params, callback)
+    local Links = require("denote.links")
+    local Frontmatter = require("denote.frontmatter")
+    local Naming = require("denote.naming")
+
+    -- Get buffer and cursor position
+    local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
     local line = params.position.line
-    local linecontent =
-        vim.api.nvim_buf_get_lines(vim.api.nvim_get_current_buf(), line, line + 1, false)[1]
+    local col = params.position.character
+
+    -- Check if cursor is on a denote link
+    local identifier = Links.get_link_at_position(bufnr, line, col)
+    if not identifier then
+        return callback(nil, nil)
+    end
+
+    -- Resolve identifier to filepath
+    local ok, filepath = pcall(Links.identifier_to_path, identifier)
+    if not ok or not filepath then
+        return callback(nil, nil)
+    end
+
+    -- Get frontmatter (title, keywords)
+    local ft = vim.filetype.match({ filename = filepath })
+    local components = Frontmatter.parse_frontmatter(filepath, ft)
+        or Naming.parse_filename(filepath, false)
+
+    -- Get content (all lines by default)
+    local content_lines = Frontmatter.get_content_after_frontmatter(filepath)
+
+    -- Format hover content
+    local hover_lines = {}
+    table.insert(hover_lines, "Title: " .. (components.title or "Untitled"))
+    if components.keywords and components.keywords ~= "" then
+        local kw_str = type(components.keywords) == "table"
+            and table.concat(components.keywords, ", ")
+            or components.keywords
+        table.insert(hover_lines, "Keywords: " .. kw_str)
+    end
+    table.insert(hover_lines, "")
+    vim.list_extend(hover_lines, content_lines)
+
+    -- Return hover result as plaintext
+    callback(nil, {
+        contents = {
+            kind = "plaintext",
+            value = table.concat(hover_lines, "\n"),
+        },
+    })
 end
 
 -- Foward links
