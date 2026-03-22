@@ -18,7 +18,7 @@
 
 --@type Denote.Configuration
 local defaults = {
-  filetype = "md",
+  filetype = "markdown-toml",
   directory = "~/notes/",
   prompts = { "title", "keywords" }, -- "date", "title", "keywords", "signature", "extension"
   integrations = {
