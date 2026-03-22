@@ -45,7 +45,7 @@ Example config via [lazy.nvim](https://github.com/folke/lazy.nvim)
 
 --@type Denote.Configuration
 vim.g.denote = {
-  filetype = "md",
+  filetype = "markdown-toml",
   directory = "~/notes/",
   prompts = { "title", "keywords" },
   integrations = {
