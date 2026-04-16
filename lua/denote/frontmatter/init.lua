@@ -356,4 +356,69 @@ M.generate_frontmatter = function(fields, filetype)
   end
 end
 
+---Get file content after frontmatter
+---@param filename string Path to the file
+---@param max_lines number? Maximum lines to return (default: all lines)
+---@return string[] lines Content lines after frontmatter
+function M.get_content_after_frontmatter(filename, max_lines)
+  max_lines = max_lines or math.huge
+  local lines = vim.fn.readfile(filename)
+  if #lines == 0 then
+    return {}
+  end
+
+  local content_start = 1
+  local first_line = lines[1]
+
+  -- YAML frontmatter (---)
+  if first_line == "---" then
+    for i = 2, #lines do
+      if lines[i] == "---" then
+        content_start = i + 1
+        break
+      end
+    end
+  -- TOML frontmatter (+++)
+  elseif first_line == "+++" then
+    for i = 2, #lines do
+      if lines[i] == "+++" then
+        content_start = i + 1
+        break
+      end
+    end
+  -- Org frontmatter (#+)
+  elseif first_line:match("^#%+") then
+    for i = 1, #lines do
+      if not lines[i]:match("^#%+") and lines[i] ~= "" then
+        content_start = i
+        break
+      elseif lines[i] == "" then
+        content_start = i + 1
+        break
+      end
+    end
+  -- Plain text frontmatter (ends with --- separator)
+  elseif first_line:match("^%w+:%s*") then
+    for i = 1, #lines do
+      if lines[i]:match("^%-+$") or lines[i] == "" then
+        content_start = i + 1
+        break
+      end
+    end
+  end
+
+  -- Skip leading empty lines after frontmatter
+  while content_start <= #lines and lines[content_start] == "" do
+    content_start = content_start + 1
+  end
+
+  -- Return content up to max_lines
+  local result = {}
+  for i = content_start, math.min(#lines, content_start + max_lines - 1) do
+    table.insert(result, lines[i])
+  end
+
+  return result
+end
+
 return M

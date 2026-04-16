@@ -16,6 +16,8 @@ vim.api.nvim_create_user_command("Denote", function(opts)
     require("denote.api").rename_file_keywords()
   elseif cmd[1] == "rename-file-signature" then
     require("denote.api").rename_file_signature()
+  elseif cmd[1] == "links" then
+    require("denote.api").links()
   elseif cmd[1] == "backlinks" then
     require("denote.api").backlinks()
   else
@@ -28,20 +30,14 @@ end, {
     -- Builtin
     local subcommands = {
       "rename-file",
-      "rename-file",
       "rename-file-title",
       "rename-file-keywords",
       "rename-file-signature",
+      "links",
       "backlinks",
     }
-
-    -- Integrations
-    if options.integrations.telescope.enabled then
-      table.insert(subcommands, "search")
-      table.insert(subcommands, "insert-link")
-      table.insert(subcommands, "link")
-    end
-
     return subcommands
   end,
 })
+
+require("denote.lsp").start()
