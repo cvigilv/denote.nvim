@@ -12,6 +12,17 @@ handlers[ms.textDocument_hover] = function(params, callback)
     local Frontmatter = require("denote.frontmatter")
     local Naming = require("denote.naming")
 
+    -- Helper to strip link syntax, keeping descriptions
+    local function strip_links(text)
+        -- Org: [[target][description]] -> description
+        text = text:gsub("%[%[([^%]]+)%]%[([^%]]+)%]%]", "%2")
+        -- Markdown: [description](target) -> description
+        text = text:gsub("%[([^%]]+)%]%([^)]+%)", "%1")
+        -- Neorg: {target}[description] -> description
+        text = text:gsub("{[^}]+}%[([^%]]+)%]", "%1")
+        return text
+    end
+
     -- Get buffer and cursor position
     local bufnr = vim.uri_to_bufnr(params.textDocument.uri)
     local line = params.position.line
@@ -20,12 +31,14 @@ handlers[ms.textDocument_hover] = function(params, callback)
     -- Check if cursor is on a denote link
     local identifier = Links.get_link_at_position(bufnr, line, col)
     if not identifier then
+        ---@diagnostic disable-next-line: param-type-mismatch
         return callback(nil, nil)
     end
 
     -- Resolve identifier to filepath
     local ok, filepath = pcall(Links.identifier_to_path, identifier)
     if not ok or not filepath then
+        ---@diagnostic disable-next-line: param-type-mismatch
         return callback(nil, nil)
     end
 
@@ -37,87 +50,52 @@ handlers[ms.textDocument_hover] = function(params, callback)
     -- Get content (all lines by default)
     local content_lines = Frontmatter.get_content_after_frontmatter(filepath)
 
-    -- Format hover content
+    -- Format hover content as markdown
+    -- TODO: add all relevant information (title, signature, keywords, etc.) and format nicely
     local hover_lines = {}
-    table.insert(hover_lines, "Title: " .. (components.title or "Untitled"))
+    table.insert(hover_lines, " # " .. (components.title or "Untitled"))
     if components.keywords and components.keywords ~= "" then
         local kw_str = type(components.keywords) == "table"
-            and table.concat(components.keywords, ", ")
+                and table.concat(components.keywords, ", ")
             or components.keywords
-        table.insert(hover_lines, "Keywords: " .. kw_str)
+        table.insert(hover_lines, " **- Keywords:** " .. kw_str)
     end
-    table.insert(hover_lines, "")
-    vim.list_extend(hover_lines, content_lines)
+    table.insert(hover_lines, "---")
+    table.insert(hover_lines, "```" .. ft)
 
-    -- Return hover result as plaintext
+    -- Strip links from content lines
+    for _, content_line in ipairs(content_lines) do
+        table.insert(hover_lines, "    " .. strip_links(content_line) .. "    ")
+    end
+
+    table.insert(hover_lines, "```")
+
+    -- Return hover result as markdown
     callback(nil, {
         contents = {
-            kind = "plaintext",
+            kind = "markdown",
             value = table.concat(hover_lines, "\n"),
         },
     })
 end
 
--- Foward links
+-- Get current buffer links
 handlers[ms.textDocument_definition] = function(params, _)
-    -- Get links
     local filepath = vim.uri_to_fname(params.textDocument.uri)
-    local links = require("denote.links").get_links(filepath)
-
-    -- Format loclist title
-    local ft = vim.filetype.match({ filename = filepath })
-    local components = require("denote.frontmatter").parse_frontmatter(filepath, ft)
-        or require("denote.naming").parse_filename(filepath, false)
-    local shorttitle = #components.title > 54 and components.title:sub(1, 51) .. "..."
-        or components.title
-
-    -- Set loclist and open
-    vim.fn.setloclist(0, links, "r")
-    vim.fn.setloclist(
-        0,
-        {},
-        "r",
-        { title = "Links in " .. components.identifier .. " '" .. shorttitle .. "'" }
-    )
-    vim.cmd("lopen")
+    require("denote.api").links(filepath)
 end
 
--- backlinks
+-- Get current buffer backlinks
 handlers[ms.textDocument_references] = function(params, _)
-    -- Get backlinks
     local filepath = vim.uri_to_fname(params.textDocument.uri)
-    local backlinks = require("denote.links").get_backlinks(filepath)
-
-    -- Format loclist title
-    local ft = vim.filetype.match({ filename = filepath })
-    local components = require("denote.frontmatter").parse_frontmatter(filepath, ft)
-        or require("denote.naming").parse_filename(filepath, false)
-    local shorttitle = #components.title > 54 and components.title:sub(1, 51) .. "..."
-        or components.title
-
-    -- Set loclist and open
-    vim.fn.setloclist(0, backlinks, "r")
-    vim.fn.setloclist(
-        0,
-        {},
-        "r",
-        { title = "Backlinks for " .. components.identifier .. " '" .. shorttitle .. "'" }
-    )
-    vim.cmd("lopen")
+    require("denote.api").backlinks(filepath)
 end
 
 -- Code actions
 local commands = {
     rename_file = { desc = "Rename file", fn = require("denote.api").rename_file },
-    rename_title = { desc = "Rename title", fn = require("denote.api").rename_file_title },
-    rename_keywords = {
-        desc = "Rename keywords",
-        fn = require("denote.api").rename_file_keywords,
-    },
-    rename_signature = {
-        desc = "Rename signature",
-        fn = require("denote.api").rename_file_signature,
-    },
+    links = { desc = "Get links", fn = require("denote.api").links },
+    backlinks = { desc = "Get backlinks", fn = require("denote.api").backlinks },
 }
 
 ---@param params lsp.ExecuteCommandParams
@@ -151,15 +129,66 @@ handlers[ms.textDocument_codeAction] = function(_, callback)
     callback(nil, res)
 end
 
+---Adapted from none-ls
+---gets word to complete for use in completion sources
+---@param params lsp.CompletionParams
+---@return string word_to_complete
+local get_word_to_complete = function(params)
+    local col = params.position.character + 1
+    local line = vim.api.nvim_get_current_line()
+    local line_to_cursor = line:sub(1, col)
+    local regex = vim.regex("\\k*$")
+
+    return line:sub(regex:match_str(line_to_cursor) + 1, col)
+end
+
+--TODO: Check https://github.com/obsidian-nvim/obsidian.nvim/blob/8af34a0532ae56e74ad7845a58eed5929d1813fa/lua/obsidian/lsp/handlers/completion.lua
+---@param params lsp.CompletionParams
+---@param callback fun(err?: lsp.ResponseError, result: lsp.CompletionItem[])
+handlers[ms.textDocument_completion] = function(params, callback)
+    local word = get_word_to_complete(params)
+    vim.print(word)
+    local get_candidates = function(entries)
+        entries = vim.fn.matchfuzzy(entries, word, { limit = 8 })
+        local items = {}
+        for k, v in ipairs(entries) do
+            local c = require("denote.frontmatter").parse_frontmatter(v, vim.filetype.match({ filename = v }))
+                or require("denote.naming").parse_filename(v, false)
+            items[k] = {
+                label = c.identifier,
+                insertText = v,
+                insertTextFormat=2,
+                kind = vim.lsp.protocol.CompletionItemKind.File,
+                documentation = {
+                  kind = "markdown",
+                  value = (
+                    "*" .. c.identifier .. string.rep(" ", 32) .. string.sub(c.date, 2, -2) .. "*" .. "\n" ..
+                    "# " .. c.title .. "\n" ..
+                    "*" .. (c.signature or "") .. string.rep(" ", 32) .. (c.keywords and (type(c.keywords) == "table"
+                        and table.concat(c.keywords, ", ")
+                        or c.keywords) or "") .."*"
+                  ),
+                },
+            }
+        end
+
+        return items
+    end
+
+    local candidates = get_candidates(vim.fn.glob(vim.g.denote.directory .. "*", true, true))
+
+    callback(nil, {
+        items = candidates,
+        isIncomplete = #candidates > 0,
+        max_width=80,
+        max_height=24,
+    })
+end
+
 ---@param params lsp.InitializeParams
 ---@param callback fun(err?: lsp.ResponseError, result: lsp.InitializeResult)
 handlers[ms.initialize] = function(params, callback)
     local config = vim.g.denote
-
-    -- Populate links cache (run once per neovim instance)
-    if _G.denote_cache_links == nil then
-        require("denote.links").populate_cache()
-    end
 
     callback(nil, {
         capabilities = {
@@ -169,6 +198,7 @@ handlers[ms.initialize] = function(params, callback)
             codeActionProvider = true,
             executeCommandProvider = { commands = vim.tbl_keys(commands) },
             textDocumentSync = 1,
+            completionProvider = { triggerCharacters = { "[[", "][" } },
         },
         serverInfo = {
             name = "denote-ls",
