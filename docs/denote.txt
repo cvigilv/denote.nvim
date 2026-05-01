@@ -67,16 +67,192 @@ Tasks, and Engagements.
 ==============================================================================
 2. Setup                                                        *denote-setup*
 
-TODO
+To use `denote.nvim`, configure it with your preferred options. The plugin
+provides sensible defaults but can be customized to fit your workflow.
 
+CONFIGURATION                                               *denote-setup-config*
+
+The following options are available: >lua
+    vim.g.denote = {
+      filetype = "markdown-toml",           -- File type for new notes
+      directory = "~/notes/",               -- Directory for Denote files
+      prompts = { "title", "keywords" },    -- Fields to prompt during creation
+      integrations = {                      -- Integrations, refer to |denote-integrations|
+        oil = false,
+        telescope = false,
+      },
+    }
+<
+
+OPTIONS                                                   *denote-setup-options*
+
+{filetype}
+    Default file type for new notes. Available options are:
+    - "markdown-toml" (default) - Markdown with TOML frontmatter
+    - "markdown-yaml" - Markdown with YAML frontmatter
+    - "org" - Org-mode format
+    - "neorg" - Neorg format
+    - "text" - Plain text
+
+{directory}
+    Path to the directory where Denote files are stored. Defaults to "~/notes/".
+    The trailing "/" is added automatically if not provided.
+
+{prompts}
+    Array of field names to prompt the user for during note creation and
+    renaming. Available fields are: "date", "title", "keywords", "signature",
+    and "extension". Defaults to { "title", "keywords" }.
+
+{integrations}
+    Table of integrations with other plugins. Refer to |denote-integrations| for
+    details.
 
 ==============================================================================
 3. API                                                            *denote-api*
 
-TODO
+The denote.nvim plugin provides a set of commands and Lua functions for
+managing Denote files. All core functionality can be accessed through both
+user commands and direct Lua function calls.
+
+                                                              *denote-api-core*
+3.1 Create a new note ~
+
+Create a new note interactively. The user is prompted for fields defined in
+the configuration's `prompts` option.
+
+Command: >vim
+    :Denote
+<
+
+Lua function: >lua
+    require("denote.api").denote()
+<
+
+Returns: boolean indicating success.
+
+                                                         *denote-api-rename-file*
+3.2 Rename file to Denote format ~
+
+Rename an existing file to comply with the Denote naming scheme. If no
+arguments are provided, prompts the user for each field in the configuration's
+`prompts` option. Defaults to the current file if `filename` is not provided.
+
+Command: >vim
+    :Denote rename-file
+<
+
+Lua function: >lua
+    require("denote.api").rename_file(filename?)
+<
+
+Parameters:
+    {filename?} (string) - File path to rename. If not provided, uses the
+                         current buffer's file.
+
+Returns: boolean indicating success.
+
+                                                     *denote-api-rename-title*
+3.3 Rename file title ~
+
+Update only the title component of a file. If `title` is not provided, the
+user is prompted for it. Defaults to the current file if `filename` is not
+provided.
+
+Command: >vim
+    :Denote rename-file-title
+<
+
+Lua function: >lua
+    require("denote.api").rename_file_title(filename?, title?)
+<
+
+Parameters:
+    {filename?} (string) - File path to rename. If not provided, uses the
+                           current buffer's file.
+    {title?} (string)    - New title for the file. If not provided, the user is
+                           prompted for it.
+
+Returns: boolean indicating success.
+
+                                                  *denote-api-rename-keywords*
+3.4 Rename file keywords ~
+
+Update only the keywords component of a file. If `keywords` is not provided,
+the user is prompted for it. Defaults to the current file if `filename` is not
+provided.
+
+Command: >vim
+    :Denote rename-file-keywords
+<
+
+Lua function: >lua
+    require("denote.api").rename_file_keywords(filename?, keywords?)
+<
+
+Parameters:
+    {filename?} (string) - File path to rename. If not provided, uses the
+                           current buffer's file.
+    {keywords?} (string) - New keywords for the file. If not provided, the
+                           user is prompted for it.
+
+Returns: boolean indicating success.
+
+                                                 *denote-api-rename-signature*
+3.5 Rename file signature ~
+
+Update only the signature component of a file. If `signature` is not provided,
+the user is prompted for it. Defaults to the current file if `filename` is not
+provided.
+
+Command: >vim
+    :Denote rename-file-signature
+<
+
+Lua function: >lua
+    require("denote.api").rename_file_signature(filename?, signature?)
+<
+
+Parameters:
+    {filename?} (string)  - File path to rename. If not provided, uses the
+                            current buffer's file.
+    {signature?} (string) - New signature for the file. If not provided, the
+                            user is prompted for it.
+
+Returns: boolean indicating success.
+
+                                                           *denote-api-backlinks*
+3.6 Show backlinks ~
+
+Populate the location list with all files that link to the current note.
+Opens the location list window to display the results.
+
+Command: >vim
+    :Denote backlinks
+<
+
+Lua function: >lua
+    require("denote.api").backlinks()
+<
+
+Returns: nil
 
 ==============================================================================
 4. Integrations                                          *denote-integrations*
+
+denote.nvim ships with a couple of integrations with other plugins to enhance
+the user experience and provide additional functionality. These integrations
+are optional and can be enabled or disabled through the `integrations` option
+in the configuration. In the configuration table, the `integrations` field is
+a table that can contain the following keys:
+
+{integrations.oil}
+    Enable syntax highlighting for Denote files in Oil.nvim file browser.
+    Requires Oil.nvim to be installed. Defaults to false.
+
+{integrations.telescope}
+    Enable Telescope pickers for searching and linking notes. Can be a boolean
+    or a table with `enabled` and `opts` keys for customization. Requires
+    Telescope to be installed. Defaults to false.
 
                                                                   *denote-oil*
 4.1 stevearc/oil.nvim ~
@@ -86,6 +262,8 @@ buffers by implementing custom syntax highlighting for the various components
 of the Denote file naming convention. It aims to improve the visual clarity
 and user experience when navigating and managing Denote files through the Oil
 file explorer interface.
+
+SETUP                                                     *denote-oil-setup*
 
 To enable, add to your `denote.nvim` configuration the following: >lua
     opts = {
@@ -108,7 +286,7 @@ To overwrite or clear this groups, refer to |highlight|.
 -----------------------------------------------------------------------------
 
                                                            *denote-telescope*
-4.1 nvim-telescope/telescope.nvim ~
+4.2 nvim-telescope/telescope.nvim ~
 
 This module provides a Telescope integration for the Denote plugin, allowing
 users to search and navigate Denote files using Telescope's interface.
@@ -184,7 +362,7 @@ As a fallback, the Telescope picker will display just the filename in the case
 the file is non-compliant with the standard Denote format.
 
 Each component is highlighted differently for easy recognition. The default
-highlight groups are defined as follows: 
+highlight groups are defined as follows:
 >vim
     hi def link DenoteDate      Number
     hi def link DenoteSignature Special
