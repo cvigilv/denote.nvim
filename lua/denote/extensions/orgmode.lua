@@ -1,6 +1,20 @@
 local CONFIG = vim.g.denote
 local Naming = require("denote.naming")
 
+
+local function open(filepath)
+  local open_cmd
+  if vim.fn.has 'win32' == 1 then
+    open_cmd = 'start'
+  elseif vim.fn.has 'macunix' == 1 then
+    open_cmd = 'open'
+  else -- Assume Unix
+    open_cmd = 'xdg-open'
+  end
+  vim.notify('[dneote] Opening URL with: ' .. open_cmd .. ' ' .. vim.fn.shellescape(filepath), vim.log.levels.INFO)
+  vim.fn.jobstart({ open_cmd, filepath }, { detach = true })
+end
+
 ---@class OrgLinkDenote:OrgLinkType
 ---@field private files OrgFiles
 ---@field private config table Configuration for denote integration
@@ -29,8 +43,12 @@ function OrgLinkDenote:follow(link)
     local identifier = tostring(self:_parse(link))
     local denote_file = self:_find_denote_file(identifier)
     if denote_file ~= nil then
-      vim.cmd("edit " .. vim.fn.fnameescape(denote_file))
-      return true
+      if vim.tbl_contains({"md", "org", "txt", "norg"}, vim.fn.fnamemodify(denote_file, ":e")) then
+        vim.cmd("edit " .. vim.fn.fnameescape(denote_file))
+        return true
+      else
+        open(denote_file)
+      end
     end
   end
   return false
