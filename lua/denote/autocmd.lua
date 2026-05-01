@@ -7,21 +7,7 @@ local logger = require("denote.core.logger")
 local M = {}
 
 M.setup = function()
-  local augroup = vim.api.nvim_create_augroup("denote", { clear = true })
-
-  -- Set denote filetype
-  vim.api.nvim_create_autocmd({ "BufReadPre", "BufNewFile" }, {
-    pattern = vim.g.denote.directory .. "*",
-    group = augroup,
-    desc = "Set Denote filetype",
-    callback = function(args)
-      local current_ft = vim.bo[args.buf].filetype
-      if not vim.endswith(current_ft, ".denote") then
-        logger.info("Setting buffer " .. args.buf .. " filetype to " .. current_ft .. ".denote")
-        vim.bo[args.buf].filetype = current_ft .. ".denote"
-      end
-    end,
-  })
+  local augroup = vim.api.nvim_create_augroup("denote", { clear = false })
 
   -- Populate links cache
   vim.api.nvim_create_autocmd("BufReadPost", {
