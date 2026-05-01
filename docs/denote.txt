@@ -199,8 +199,79 @@ REQUIREMENTS                                    *denote-telescope-requirements*
 This integrations requires the Telescope plugin to be installed and available.
 If Telescope is not found, an error will be raised.
 
+-----------------------------------------------------------------------------
+
+                                                              *denote-orgmode*
+4.3 nvim-orgmode/orgmode ~
+
+This integration enables custom `[[denote:...]]` link format within org-mode
+files. It provides a seamless way to link between Denote notes using Org-mode's
+native link syntax, with smart file handling and link completion.
+
+SETUP                                                   *denote-orgmode-setup*
+
+To enable this integration, add the following to your `orgmode` configuration:
+>lua
+    require("orgmode").setup({
+      -- your other config...
+      hyperlinks = {
+        sources = {
+          require("denote.extensions.orgmode"):new({
+            files = vim.g.denote.directory
+          }),
+        },
+      },
+    })
+<
+
+LINK FORMAT                                             *denote-orgmode-format*
+
+The Denote link format in org-mode is: >vim
+    [[denote:IDENTIFIER][description]]
+<
+
+Where `IDENTIFIER` is the timestamp of the Denote file (e.g. `20240601T174946`).
+For example: >text
+    [[denote:20240601T174946][How to Tie a Tie]]
+<
+
+When you follow this link (using `C-c C-o` in org-mode), the plugin will open
+the corresponding Denote file.
+
+FEATURES                                                 *denote-orgmode-features*
+
+Smart File Opening ~
+    The plugin intelligently handles different file types:
+    - Supported denote file types (.md, .org, .txt, .norg) are opened in
+      Neovim
+    - Other file types following the denote convention are opened with the
+      system's default application
+
+Link Autocomplete ~
+    When typing a Denote link, the plugin provides autocomplete suggestions
+    for available Denote file identifiers based on files in your Denote
+    directory.
+
+CONFIGURATION                                         *denote-orgmode-configuration*
+
+{files}
+    (required) Path to the Denote files directory. This is typically set to
+    `vim.g.denote.directory`.
+
+{config}
+    (optional) Advanced configuration table for customizing link patterns.
+    Supports the following fields:
+    - `denote_directory` (string) - Custom denote directory path (overrides
+      the `files` parameter if provided).
+
+REQUIREMENTS                                         *denote-orgmode-requirements*
+
+This integration requires the nvim-orgmode plugin to be installed and
+available. If orgmode is not found, an error will be raised. For installation
+instructions, visit: https://github.com/nvim-orgmode/orgmode
+
 ==============================================================================
-                                                                   *changelog*
+                                                                    *changelog*
 
 TODO
 
