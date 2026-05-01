@@ -2,7 +2,6 @@
 ---@author Carlos Vigil-Vásquez
 ---@license MIT 2025
 
--- Create autocommand to
 if not vim.g.loaded_denote_plugin then
   local logger = require("denote.core.logger")
   logger.info("Setting up plugin")
@@ -18,5 +17,4 @@ if not vim.g.loaded_denote_plugin then
   require("denote.autocmd").setup()
 end
 
-vim.g.loaded_denote_plugin = false
-
+vim.g.loaded_denote_plugin = true
