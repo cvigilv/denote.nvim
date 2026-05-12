@@ -29,11 +29,12 @@ end
 
 vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
     pattern = "*",
-    group = vim.api.nvim_create_augroup("denote", { clear = true }),
+    group = vim.api.nvim_create_augroup("denote", { clear = false }),
     desc = "Detect if a file is a denote note and set the filetype accordingly",
     callback = function(ev)
         local logger = require("denote.core.logger")
         local filepath = vim.fs.abspath(ev.file)
+        logger.debug("Checking if file '" .. filepath .. "' is denote.")
         if (in_silo(filepath) and is_denote(filepath)) or (is_denote(filepath)) then
             set_as_denote()
             logger.debug("Set filetype to " .. vim.bo.filetype .. " for " .. ev.file)
