@@ -29,7 +29,7 @@ end
 
 vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
     pattern = "*",
-    group = vim.api.nvim_create_augroup("denote", { clear = false }),
+    group = vim.api.nvim_create_augroup("denote_ftdetect", { clear = false }),
     desc = "Detect if a file is a denote note and set the filetype accordingly",
     callback = function(ev)
         local logger = require("denote.core.logger")
