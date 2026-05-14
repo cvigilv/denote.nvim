@@ -147,16 +147,15 @@ end
 ---@param callback fun(err?: lsp.ResponseError, result: lsp.CompletionItem[])
 handlers[ms.textDocument_completion] = function(params, callback)
     local word = get_word_to_complete(params)
-    vim.print(word)
     local get_candidates = function(entries)
-        entries = vim.fn.matchfuzzy(entries, word, { limit = 8 })
+        entries = vim.fn.matchfuzzy(entries, word, { limit = 100 })
         local items = {}
         for k, v in ipairs(entries) do
             local c = require("denote.frontmatter").parse_frontmatter(v, vim.filetype.match({ filename = v }))
                 or require("denote.naming").parse_filename(v, false)
             items[k] = {
-                label = c.identifier,
-                insertText = v,
+                label = vim.fs.basename(v),
+                insertText = "denote:" .. c.identifier,
                 insertTextFormat=2,
                 kind = vim.lsp.protocol.CompletionItemKind.File,
                 documentation = {
@@ -180,8 +179,8 @@ handlers[ms.textDocument_completion] = function(params, callback)
     callback(nil, {
         items = candidates,
         isIncomplete = #candidates > 0,
-        max_width=80,
-        max_height=24,
+        max_width=96,
+        max_height=32,
     })
 end
 
