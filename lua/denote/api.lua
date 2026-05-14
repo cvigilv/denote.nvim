@@ -17,8 +17,13 @@ local FILETYPE_TO_EXTENSION = {
 
 local M = {}
 
--- Create a new note interactively
-function M.denote()
+--- Create a new note. If called with no arguments, it behaves interactively.
+---@param fields_override table? Optional table with pre-filled fields (identifier, title, keywords, signature, extension, date). Fields present here skip their corresponding prompt.
+---@param open boolean? If true (default), open the file in the editor. If false, write to disk and return the filepath without opening.
+---@return string filepath The full path of the created note.
+function M.denote(fields_override, open)
+    if open == nil then open = true end
+
     local opts = vim.g.denote
     -- Define base fields
     local identifier = Naming.generate_timestamp()
@@ -27,31 +32,42 @@ function M.denote()
         date = Naming.timestamp_to_date(identifier --[[@as string]]),
         extension = FILETYPE_TO_EXTENSION[opts.filetype],
     }
-    -- Prompt user for fields defined in `opts.prompts`
+
+    -- Merge overrides
+    fields = vim.tbl_extend("force", fields, fields_override or {})
+
+    -- Prompt user for fields defined in `opts.prompts` (pre-filled values serve as defaults)
     for _, field in ipairs(opts.prompts) do
         fields[field] = Prompts[field](nil, fields)
     end
+
     -- Create new note & add frontmatter
     local filename = Naming.generate_filename(fields) --[[@as string]]
-    if Naming.is_denote(filename) then
-        vim.cmd("edit " .. opts.directory .. filename)
+    if not Naming.is_denote(filename) then
+        error("[denote] The new filename doesn't look like a Denote filename")
+    end
+
+    local filepath = opts.directory .. filename
+    local frontmatter = require("denote.frontmatter").generate_frontmatter(fields, opts.filetype)
+
+    if open then
+        vim.cmd("edit " .. filepath)
         vim.api.nvim_buf_set_lines(
             0,
             0,
             -1,
             false,
-            vim.split(
-                require("denote.frontmatter").generate_frontmatter(fields, opts.filetype),
-                "\n"
-            )
+            vim.split(frontmatter, "\n")
         )
         vim.cmd("normal G")
         vim.cmd("startinsert")
-        return true
     else
-        error("[denote] The new filename doesn't look like a Denote filename")
-        return false
+        local f = io.open(filepath, "w")
+        f:write(frontmatter)
+        f:close()
     end
+
+    return filepath
 end
 
 -- Update title of file
