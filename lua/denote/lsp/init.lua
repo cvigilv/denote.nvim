@@ -1,8 +1,9 @@
 local lsp = {}
 
----@param buf integer
+---@param buf integer?
 ---@return integer?
 lsp.start = function(buf)
+    buf = buf or vim.api.nvim_get_current_buf()
     local log = require("denote.core.logger")
     local handlers = require("denote.lsp.handlers")
     local capabilities = vim.lsp.protocol.make_client_capabilities()
