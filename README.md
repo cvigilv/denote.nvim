@@ -1,5 +1,11 @@
 # denote.nvim
 
+> [!NOTE]  
+> I'm working on this project on my free time, so expect bursts of change as I get so free time. This is already functional and
+> provides an API you can use to make custom hooks and implement your own pipelines for using the denote naming convention. That
+> said, I'm working on an in-process LSP that enables having other nice things. If you are interested in that, point Neovim
+> to use that branch. Open to issues, ideas, PRs, etc. Help me make this plugin great!
+
 This Neovim plugin provides a command `:Denote` that contains subcommands to create and rename
 text files in a flat notes directory using the [Emacs Denote package's file-naming
 scheme](https://protesilaos.com/emacs/denote#h:4e9c7512-84dc-4dfb-9fa9-e15d51178e5).
