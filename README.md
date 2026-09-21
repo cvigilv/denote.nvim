@@ -1,7 +1,7 @@
 # denote.nvim
 
 > [!NOTE]  
-> I'm working on this project on my free time, so expect bursts of change as I get so free time. This is already functional and
+> I'm working on this project in my free time, so expect bursts of changes as I get said free time. This is already functional and
 > provides an API you can use to make custom hooks and implement your own pipelines for using the denote naming convention. That
 > said, I'm working on an in-process LSP that enables having other nice things. If you are interested in that, point Neovim
 > to use that branch. Open to issues, ideas, PRs, etc. Help me make this plugin great!
@@ -84,7 +84,7 @@ Currently, the `:Denote` command supports the following subcommands:
 ## stevearc/oil.nvim
 
 If you use [stevearc/oil.nvim](https://github.com/stevearc/oil.nvim) to manage your files, this
-extension will automatically setup custom highlighting to files that follow the Denote file-naming scheme
+extension will automatically set up custom highlighting for files that follow the Denote file-naming scheme
 whenever you open an `oil` buffer on the directory set in `vim.g.denote`.
 
 > Note: the highlighting is only applied when the `oil` extension is enabled in the config, but
