@@ -38,6 +38,7 @@ return {
     local replaced = {}
     Filesystem.replace_file = function(old_filename, new_filename)
       replaced = { old_filename, new_filename }
+      return true
     end
 
     local ok = require("denote.api").rename_file_title(old_path, "New title")
