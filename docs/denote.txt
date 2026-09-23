@@ -64,6 +64,24 @@ otherwise, of increasingly dubious utility like:
 But we’ll let you get back to work. Don’t Eschew or Neglect your Obligations,
 Tasks, and Engagements.
 
+FILE-NAMING SCHEME                                  *denote-file-naming-scheme*
+
+A Denote filename has this fixed component order: >text
+    IDENTIFIER[==SIGNATURE][--TITLE][__KEYWORDS][.EXTENSION]
+<
+The identifier is required and uses eight date digits, `T`, and six time
+digits, for example `20250102T030405`. The remaining components are optional:
+
+- Signatures contain ASCII letters, digits, or `=`.
+- Titles contain lowercase ASCII letters, digits, or `-`.
+- Keywords contain lowercase ASCII letters, digits, or `_`.
+- An extension contains one or more non-whitespace, non-period characters.
+
+The extension is not limited to the configured note file types. This allows
+Denote names for files such as images and videos. Only one extension is
+accepted, so names such as `20250102T030405--archive.tar.gz` do not match the
+scheme. Validation uses the basename and ignores directory names.
+
 ==============================================================================
 2. Setup                                                        *denote-setup*
 
