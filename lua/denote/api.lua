@@ -26,20 +26,20 @@ function M.denote()
     date = Naming.timestamp_to_date(identifier),
     extension = FILETYPE_TO_EXTENSION[opts.filetype],
   }
-  -- Prompt user for fields defined in `opts.prompts`
-  for _, field in ipairs(opts.prompts) do
-    fields[field] = Prompts[field](nil, fields)
-  end
-  -- Create new note
-  local filename = Naming.generate_filename(fields) --[[@as string]]
-  if Naming.is_denote(filename) then
+
+  Prompts.collect(nil, fields, opts.prompts, function(values)
+    if values == nil then
+      return
+    end
+
+    local filename = Naming.generate_filename(values) --[[@as string]]
+    if not Naming.is_denote(filename) then
+      error("[denote] The new filename doesn't look like a Denote filename")
+    end
+
     vim.cmd("edit " .. opts.directory .. filename)
     vim.cmd("startinsert")
-    return true
-  else
-    error("[denote] The new filename doesn't look like a Denote filename")
-    return false
-  end
+  end)
 end
 
 local function rename_component(filename, field, value)
@@ -49,16 +49,28 @@ local function rename_component(filename, field, value)
   end
 
   local components = Naming.parse_filename(filename, false)
-  components[field] = value or Prompts[field](filename, components)
-  local new_filename = Naming.generate_filename(components)
-  local new_filepath = vim.g.denote.directory .. new_filename
-  return Filesystem.replace_file(filename, new_filepath --[[@as string]])
+  local function replace_file(new_value)
+    if new_value == nil then
+      return
+    end
+
+    components[field] = new_value
+    local new_filename = Naming.generate_filename(components)
+    local new_filepath = vim.g.denote.directory .. new_filename
+    return Filesystem.replace_file(filename, new_filepath --[[@as string]])
+  end
+
+  if value ~= nil then
+    return replace_file(value)
+  end
+
+  Prompts[field](filename, components, replace_file)
 end
 
 -- Update title of file
 ---@param filename string? File to update
 ---@param title string? New title
----@return boolean status Whether the title update was succesfully executed
+---@return boolean? status Whether the title update was succesfully executed
 function M.rename_file_title(filename, title)
   return rename_component(filename, "title", title)
 end
@@ -66,7 +78,7 @@ end
 -- Update signature of file
 ---@param filename string? File to update
 ---@param signature string? New signature
----@return boolean status Whether the signature update was succesfully executed
+---@return boolean? status Whether the signature update was succesfully executed
 function M.rename_file_signature(filename, signature)
   return rename_component(filename, "signature", signature)
 end
@@ -74,14 +86,13 @@ end
 -- Update keywords of file
 ---@param filename string? File to update
 ---@param keywords string? New keywords
----@return boolean status Whether the keywords update was succesfully executed
+---@return boolean? status Whether the keywords update was succesfully executed
 function M.rename_file_keywords(filename, keywords)
   return rename_component(filename, "keywords", keywords)
 end
 
 ---Rename file into a Denote compliant format. If no arguments are passed, it runs interactively.
 ---@param filename string? File to rename, defaults to current file.
----@return boolean status Whether the rename process was succesfully executed
 function M.rename_file(filename)
   -- Parse filename to get current fields
   filename = filename or vim.fn.expand("%:p")
@@ -94,22 +105,21 @@ function M.rename_file(filename)
     signature = "",
     extension = vim.fn.fnamemodify(filename, ":e"),
   }, Naming.parse_filename(filename, false))
-  -- Prompt user for fields
-  for _, field in ipairs(vim.g.denote.prompts) do
-    fields[field] = Prompts[field](filename, fields)
-  end
-  -- Generate new filename
-  local new_filename = Naming.generate_filename(fields) --[[@as string]]
-  -- Rename file if new filename is Denote compliant
-  if Naming.is_denote(new_filename) then
-    return Filesystem.replace_file(
+  Prompts.collect(filename, fields, vim.g.denote.prompts, function(values)
+    if values == nil then
+      return
+    end
+
+    local new_filename = Naming.generate_filename(values) --[[@as string]]
+    if not Naming.is_denote(new_filename) then
+      error("[denote] The new filename doesn't look like a Denote filename")
+    end
+
+    Filesystem.replace_file(
       filename,
       vim.fs.normalize(vim.fs.dirname(vim.fs.abspath(filename)) .. "/" .. new_filename)
     )
-  else
-    error("[denote] The new filename doesn't look like a Denote filename")
-    return false
-  end
+  end)
 end
 
 ---Populate loclist with backlinks of current buffer.
