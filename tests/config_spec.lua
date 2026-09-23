@@ -1,5 +1,6 @@
 local H = dofile(vim.g.denote_test_root .. "/tests/helpers.lua")
 local Config = require("denote.config")
+local Filesystem = require("denote.core.fs")
 
 local function fails_with(pattern, opts)
   local ok, err = pcall(Config.update_config, opts)
@@ -11,11 +12,17 @@ return {
   H.test("configuration applies defaults and normalizes the directory", function()
     local config = Config.update_config({ directory = "/tmp/denote-notes" })
 
-    H.eq("/tmp/denote-notes/", config.directory)
+    H.eq(Filesystem.canonical_path("/tmp/denote-notes") .. "/", config.directory)
     H.eq("markdown-toml", config.filetype)
     H.eq({ "title", "keywords" }, config.prompts)
     H.eq(false, config.integrations.oil)
     H.eq({ enabled = false, opts = {} }, config.integrations.telescope)
+  end),
+
+  H.test("configuration expands the home directory", function()
+    local config = Config.update_config({ directory = "~/notes" })
+
+    H.eq(Filesystem.canonical_path("~/notes") .. "/", config.directory)
   end),
 
   H.test("configuration preserves telescope options", function()
