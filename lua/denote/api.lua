@@ -4,7 +4,6 @@
 
 local Prompts = require("denote.ui.prompts")
 local Naming = require("denote.naming")
-local String = require("denote.core.string")
 local Filesystem = require("denote.core.fs")
 
 local FILETYPE_TO_EXTENSION = {
@@ -43,28 +42,25 @@ function M.denote()
   end
 end
 
+local function rename_component(filename, field, value)
+  filename = filename or vim.fn.expand("%:p")
+  if not Naming.is_denote(filename) then
+    error("[denote] This doesn't look like a Denote file")
+  end
+
+  local components = Naming.parse_filename(filename, false)
+  components[field] = value or Prompts[field](filename, components)
+  local new_filename = Naming.generate_filename(components)
+  local new_filepath = vim.g.denote.directory .. new_filename
+  return Filesystem.replace_file(filename, new_filepath --[[@as string]])
+end
+
 -- Update title of file
 ---@param filename string? File to update
 ---@param title string? New title
 ---@return boolean status Whether the title update was succesfully executed
 function M.rename_file_title(filename, title)
-  filename = filename or vim.fn.expand("%:p")
-  if not Naming.is_denote(filename) then
-    error("[denote] This doesn't look like a Denote file")
-    return false
-  end
-
-  local components = Naming.parse_filename(filename, false)
-  components.title = title or Prompts.title(filename, components)
-  local new_filename = Naming.generate_filename(components)
-
-  if filename ~= nil then
-    local new_filepath = vim.g.denote.directory .. new_filename
-    return Filesystem.replace_file(filename, new_filepath --[[@as string]])
-  else
-    error("[denote] Failed to change title of file")
-    return false
-  end
+  return rename_component(filename, "title", title)
 end
 
 -- Update signature of file
@@ -72,23 +68,7 @@ end
 ---@param signature string? New signature
 ---@return boolean status Whether the signature update was succesfully executed
 function M.rename_file_signature(filename, signature)
-  filename = filename or vim.fn.expand("%:p")
-  if not Naming.is_denote(filename) then
-    error("[denote] This doesn't look like a Denote file")
-    return false
-  end
-
-  local components = Naming.parse_filename(filename, false)
-  components.signature = signature or Prompts.signature(filename, components)
-  local new_filename = Naming.generate_filename(components)
-
-  if filename ~= nil then
-    local new_filepath = vim.g.denote.directory .. new_filename
-    return Filesystem.replace_file(filename, new_filepath --[[@as string]])
-  else
-    error("[denote] Failed to change signature of file")
-    return false
-  end
+  return rename_component(filename, "signature", signature)
 end
 
 -- Update keywords of file
@@ -96,23 +76,7 @@ end
 ---@param keywords string? New keywords
 ---@return boolean status Whether the keywords update was succesfully executed
 function M.rename_file_keywords(filename, keywords)
-  filename = filename or vim.fn.expand("%:p")
-  if not Naming.is_denote(filename) then
-    error("[denote] This doesn't look like a Denote file")
-    return false
-  end
-
-  local components = Naming.parse_filename(filename, false)
-  components.keywords = keywords or Prompts.keywords(filename, components)
-  local new_filename = Naming.generate_filename(components)
-
-  if filename ~= nil then
-    local new_filepath = vim.g.denote.directory .. new_filename
-    return Filesystem.replace_file(filename, new_filepath --[[@as string]])
-  else
-    error("[denote] Failed to change keywords of file")
-    return false
-  end
+  return rename_component(filename, "keywords", keywords)
 end
 
 ---Rename file into a Denote compliant format. If no arguments are passed, it runs interactively.
