@@ -7,5 +7,6 @@ vim.opt.packpath = vim.opt.runtimepath:get()
 vim.opt.swapfile = false
 vim.opt.writebackup = false
 vim.opt.shadafile = "NONE"
+vim.fn.mkdir(vim.fn.stdpath("cache"), "p")
 vim.cmd("filetype off")
 vim.cmd("filetype plugin off")
