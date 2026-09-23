@@ -6,6 +6,10 @@ local String = require("denote.core.string")
 
 local M = {}
 
+local filename_pattern = vim.regex(
+  [[\v^\d{8}T\d{6}(\=\=[A-Za-z0-9=]+)?(--[a-z0-9-]+)?(__[a-z0-9_]+)?(\.[^[:space:].]+)?$]]
+)
+
 --- Denote component regex patterns
 ---@type table<string,string>
 M.PATTERNS = {
@@ -26,14 +30,11 @@ M.SEPARATORS = {
   extension = ".",
 }
 
----Check is filename is a Denote file
+---Check if a path has a Denote filename
 ---@param filename string
 ---@return boolean is_denote
 function M.is_denote(filename)
-  if string.match(filename, M.PATTERNS.identifier) then
-    return true
-  end
-  return false
+  return filename_pattern:match_str(vim.fs.basename(filename)) ~= nil
 end
 
 ---Convert timestamp into date string
@@ -70,12 +71,22 @@ function M.parse_filename(filename, split)
     keywords = "",
     extension = "",
   }
+  filename = vim.fs.basename(filename)
+  if not M.is_denote(filename) then
+    return components
+  end
+
+  components.extension = filename:match(M.PATTERNS.extension .. "$") or ""
+  filename = filename:sub(1, #filename - #components.extension)
+
   for name, pattern in pairs(M.PATTERNS) do
-    for match in string.gmatch(filename, pattern) do
-      if vim.tbl_contains(vim.tbl_keys(M.SEPARATORS), name) and split then
-        components[name] = vim.split(match, M.SEPARATORS[name]) --[[@as string]]
-      else
-        components[name] = match
+    if name ~= "extension" then
+      for match in string.gmatch(filename, pattern) do
+        if vim.tbl_contains(vim.tbl_keys(M.SEPARATORS), name) and split then
+          components[name] = vim.split(match, M.SEPARATORS[name]) --[[@as string]]
+        else
+          components[name] = match
+        end
       end
     end
   end
