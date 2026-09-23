@@ -10,7 +10,10 @@ local function absolute_path(path)
   return vim.fs.normalize(vim.fs.abspath(path), { expand_env = false })
 end
 
-local function canonical_path(path)
+---Resolve a path to a normalized absolute path, including symlinks when possible.
+---@param path string
+---@return string
+function M.canonical_path(path)
   path = absolute_path(path)
   local resolved = uv.fs_realpath(path)
   if resolved then
@@ -26,10 +29,10 @@ local function canonical_path(path)
 end
 
 local function buffer_for_path(path)
-  local target = canonical_path(path)
+  local target = M.canonical_path(path)
   for _, buffer in ipairs(vim.api.nvim_list_bufs()) do
     local name = vim.api.nvim_buf_get_name(buffer)
-    if name ~= "" and canonical_path(name) == target then
+    if name ~= "" and M.canonical_path(name) == target then
       return buffer
     end
   end

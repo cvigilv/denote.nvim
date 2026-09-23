@@ -2,6 +2,8 @@
 ---@author Carlos Vigil-Vásquez
 ---@license MIT 2025
 
+local Filesystem = require("denote.core.fs")
+
 -- Forward Link Functions:
 --
 -- • denote-link - Create a link to another note with description
@@ -115,6 +117,7 @@ local M = {}
 ---@param filepath string The path of the file to find "to" links for
 ---@return table to_links Array of file paths that are linked from this file
 M.get_links = function(filepath)
+  filepath = Filesystem.canonical_path(filepath)
   local content = vim.fn.readfile(filepath)
   local filetype = vim.filetype.match({ filename = filepath })
   local links = {}
@@ -136,10 +139,11 @@ end
 ---@param filepath string The path of the file to find "from" links for
 ---@return table from_links Array of file paths that link to the given file
 M.get_backlinks = function(filepath)
+  filepath = Filesystem.canonical_path(filepath)
   local backlinks = {}
   for fp, links in pairs(_G.denote_cache_links) do
     for _, link in ipairs(links) do
-      if link.path == filepath then
+      if Filesystem.canonical_path(link.path) == filepath then
         local ft = vim.filetype.match({ filename = fp })
         local components = require("denote.frontmatter").parse_frontmatter(fp, ft)
           or require("denote.naming").parse_filename(fp)
