@@ -48,7 +48,7 @@ function M.replace_file(old_filename, new_filename)
     return true
   end
 
-  -- Issue #9: pass paths straight to libuv so shell metacharacters stay filename text.
+  -- Pass paths straight to libuv so shell metacharacters stay filename text
   local destination_stat, stat_error, stat_code = uv.fs_lstat(new_filename)
   if destination_stat then
     error(string.format("[denote] Cannot rename %q: destination %q already exists", old_filename, new_filename))
