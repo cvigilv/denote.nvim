@@ -103,8 +103,9 @@ return {
     local followed = source:follow("denote:" .. identifier)
     vim.cmd = original_cmd
 
+    local matched_path = vim.fn.glob(directory .. "/" .. identifier .. "*", false, true)[1]
     H.eq(true, followed)
-    H.eq("edit " .. vim.fn.fnameescape(path), command)
+    H.eq("edit " .. vim.fn.fnameescape(matched_path), command)
     package.loaded["denote.extensions.orgmode"] = nil
     H.remove(directory)
   end),
