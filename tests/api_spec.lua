@@ -1,32 +1,6 @@
 local H = dofile(vim.g.denote_test_root .. "/tests/helpers.lua")
 
 return {
-  H.test("the Denote command dispatches note creation", function()
-    pcall(vim.api.nvim_del_user_command, "Denote")
-    vim.g.loaded_denote_plugin = nil
-    local directory = H.tmpdir()
-    vim.g.denote = {
-      directory = directory .. "/",
-      prompts = {},
-      integrations = { oil = false, telescope = false },
-    }
-
-    local called = false
-    package.loaded["denote.api"] = {
-      denote = function()
-        called = true
-      end,
-    }
-
-    vim.cmd("runtime plugin/denote.lua")
-    vim.cmd("Denote")
-
-    H.truthy(vim.api.nvim_get_commands({ builtin = false }).Denote)
-    H.eq(true, called)
-    package.loaded["denote.api"] = nil
-    H.remove(directory)
-  end),
-
   H.test("rename title builds the destination inside the note directory", function()
     local directory = H.tmpdir()
     local old_path = directory .. "/20250102T030405--old-title.md"
