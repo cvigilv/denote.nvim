@@ -10,9 +10,15 @@ if not vim.g.loaded_denote_plugin then
   vim.g.denote = require("denote.config").update_config(vim.g.denote)
   _G.denote_cache_links = {}
 
-  vim.api.nvim_create_user_command("Denote", function()
-    require("denote.api").denote()
-  end, {})
+  vim.api.nvim_create_user_command("Denote", function(opts)
+    require("denote.api").dispatch(opts.fargs)
+  end, {
+    desc = "Manage Denote notes",
+    nargs = "*",
+    complete = function(arg_lead)
+      return require("denote.api").complete(arg_lead)
+    end,
+  })
 
   require("denote.autocmd").setup()
 end

@@ -16,6 +16,47 @@ local FILETYPE_TO_EXTENSION = {
 
 local M = {}
 
+local SUBCOMMANDS = {
+  ["backlinks"] = "backlinks",
+  ["rename-file"] = "rename_file",
+  ["rename-file-keywords"] = "rename_file_keywords",
+  ["rename-file-signature"] = "rename_file_signature",
+  ["rename-file-title"] = "rename_file_title",
+}
+
+---Dispatch a Denote command.
+---@param args string[]
+---@return any
+function M.dispatch(args)
+  if #args == 0 then
+    return M.denote()
+  end
+  if #args > 1 then
+    error(string.format("[denote] Expected one subcommand, got %d arguments", #args))
+  end
+
+  local name = args[1]
+  local handler = SUBCOMMANDS[name]
+  if not handler then
+    error("[denote] Unsupported subcommand: " .. name)
+  end
+  return M[handler]()
+end
+
+---Complete Denote subcommands.
+---@param arg_lead string
+---@return string[]
+function M.complete(arg_lead)
+  local matches = {}
+  for name in pairs(SUBCOMMANDS) do
+    if vim.startswith(name, arg_lead) then
+      matches[#matches + 1] = name
+    end
+  end
+  table.sort(matches)
+  return matches
+end
+
 -- Create a new note interactively
 function M.denote()
   local opts = vim.g.denote
