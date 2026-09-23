@@ -5,14 +5,7 @@
 local Prompts = require("denote.ui.prompts")
 local Naming = require("denote.naming")
 local Filesystem = require("denote.core.fs")
-
-local FILETYPE_TO_EXTENSION = {
-  org = ".org",
-  neorg = ".norg",
-  ["markdown-yaml"] = ".md",
-  ["markdown-toml"] = ".md",
-  text = ".txt",
-}
+local Config = require("denote.config")
 
 local M = {}
 
@@ -65,7 +58,7 @@ function M.denote()
   local fields = {
     identifier = identifier,
     date = Naming.timestamp_to_date(identifier),
-    extension = FILETYPE_TO_EXTENSION[opts.filetype],
+    extension = Config.filetype_extension(opts.filetype),
   }
 
   Prompts.collect(nil, fields, opts.prompts, function(values)
