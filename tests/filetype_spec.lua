@@ -30,4 +30,19 @@ return {
     H.eq("markdown", vim.bo.filetype)
     H.remove(directory)
   end),
+
+  H.test("filetype detection rejects malformed Denote names", function()
+    local directory = H.tmpdir()
+    local path = directory .. "/20250102T030405--title.md.bak"
+    H.write_file(path, { "# Malformed" })
+    vim.g.denote = { directory = directory .. "/" }
+
+    vim.cmd("runtime ftdetect/denote.lua")
+    vim.cmd("edit " .. vim.fn.fnameescape(path))
+    vim.bo.filetype = "markdown"
+    vim.api.nvim_exec_autocmds("BufRead", { buffer = 0, modeline = false })
+
+    H.eq("markdown", vim.bo.filetype)
+    H.remove(directory)
+  end),
 }

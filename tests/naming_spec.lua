@@ -29,7 +29,19 @@ return {
     H.matches("^%[2025%-01%-02 ", components.date)
   end),
 
-  H.test("naming rejects filenames without an identifier", function()
-    H.eq(false, Naming.is_denote("ordinary-note.md"))
+  H.test("naming validates the complete basename", function()
+    H.truthy(Naming.is_denote("/notes/20250102T030405.md"))
+    H.truthy(Naming.is_denote("20250102T030405__one_two"))
+    H.eq(false, Naming.is_denote("/notes/20250102T030405/ordinary-note.md"))
+    H.eq(false, Naming.is_denote("20250102T030405--title.md.bak"))
+    H.eq(false, Naming.is_denote("20250102T030405--.md"))
+  end),
+
+  H.test("naming does not parse malformed filenames", function()
+    local components = Naming.parse_filename("20250102T030405--title.md.bak")
+
+    H.eq("", components.identifier)
+    H.eq("", components.title)
+    H.eq("", components.extension)
   end),
 }
