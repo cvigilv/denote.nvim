@@ -104,12 +104,8 @@ OPTIONS                                                   *denote-setup-options*
     and "extension". Defaults to { "title", "keywords" }.
 
 {integrations}
-    Table of integrations with other plugins. `oil` must be a boolean.
-    `telescope` accepts a boolean or a table with a boolean `enabled` field and
-    an optional `opts` table. Refer to |denote-integrations| for details.
-
-The plugin validates these options during setup and reports invalid values before
-loading commands or integrations.
+    Table of integrations with other plugins. Refer to |denote-integrations| for
+    details.
 
 ==============================================================================
 3. API                                                            *denote-api*
