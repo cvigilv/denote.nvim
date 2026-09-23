@@ -61,6 +61,12 @@ vim.g.denote = {
 }
 ```
 
+`filetype` accepts `markdown-toml`, `markdown-yaml`, `org`, `neorg`, or `text`. Each
+entry in `prompts` must be `date`, `title`, `keywords`, `signature`, or `extension`.
+`integrations.oil` is a boolean. `integrations.telescope` accepts a boolean or a table
+with a boolean `enabled` field and an optional `opts` table. Invalid values raise an
+error when the plugin loads.
+
 On setup, the plugin will create a global variable `denote` that contains the configuration
 table, which can be employed for extensions or other custom functionality:
 
