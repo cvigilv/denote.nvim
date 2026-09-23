@@ -123,6 +123,18 @@ require("orgmode").setup({
   },
 })
 ```
+
+# Tests
+
+Run the headless Neovim test suite with:
+
+```sh
+make test
+```
+
+Set `NVIM` to test a specific executable, for example `make test NVIM=nvim-0.11`.
+CI tests Neovim 0.11, stable, and nightly on Linux, plus stable on macOS and Windows.
+
 # Credits
 
 * [historia/simple-denote.nivm](https://codeberg.org/historia/simple-denote.nvim) - This is a
