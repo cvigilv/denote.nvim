@@ -40,7 +40,7 @@ M.extension = function(_, components, callback)
   prompt_factory(components, "extension", callback)
 end
 
--- Issue #10: start each prompt only after the previous callback completes.
+-- Start each prompt only after the previous callback completes.
 function M.collect(filename, components, fields, callback)
   local function prompt_next(index)
     local field = fields[index]
