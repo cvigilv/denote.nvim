@@ -3,28 +3,38 @@
 ---@license MIT 2025
 
 local logger = require("denote.core.logger")
+local uv = vim.uv or vim.loop
 
 local M = {}
 
 M.setup = function()
   local augroup = vim.api.nvim_create_augroup("denote", { clear = false })
+  local directory = vim.g.denote.directory --[[@as string]]
+  local scanning = false
+  local scan_autocmd
 
   -- Populate links cache
-  vim.api.nvim_create_autocmd("BufReadPost", {
-    pattern = vim.g.denote.directory .. "*",
+  scan_autocmd = vim.api.nvim_create_autocmd("BufReadPost", {
+    pattern = directory .. "*",
     group = augroup,
     desc = "Populate links cache",
-    once = true,
     callback = function()
-      local dir = vim.g.denote.directory --[[@as string]]
-      local uv = vim.loop
-      uv.fs_scandir(dir, function(err, req)
+      if scanning then
+        return
+      end
+      scanning = true
+
+      uv.fs_scandir(directory, function(err, req)
         if err or not req then
+          scanning = false
           vim.schedule(function()
-            require("denote.core.logger").info(
-              "Failed to scan directory: " .. (err or "unknown error"),
-              vim.log.levels.ERROR
+            local message = string.format(
+              "Failed to scan note directory %s: %s",
+              directory,
+              err or "unknown error"
             )
+            logger.error(message)
+            vim.notify("[denote] " .. message, vim.log.levels.ERROR)
           end)
           return
         end
@@ -38,21 +48,19 @@ M.setup = function()
           if typ == "file" then
             local ext = name:match("%.([^.]+)$")
             if ext and vim.tbl_contains({"txt", "md", "org", "norg"}, ext) then
-              table.insert(files, dir .. name)
+              table.insert(files, vim.fs.joinpath(directory, name))
             end
           end
         end
 
-        -- Process files on main thread (for Lua module safety)
         vim.schedule(function()
+          scanning = false
           for _, filepath in ipairs(files) do
             require("denote.links").get_links(filepath)
           end
-          vim.notify("pop")
+          vim.api.nvim_del_autocmd(scan_autocmd)
           local count = #vim.tbl_keys(_G.denote_cache_links or {})
-          require("denote.core.logger").info(
-            "Populated Denote links cache with " .. count .. " links"
-          )
+          logger.info("Populated Denote links cache with " .. count .. " links")
         end)
       end)
     end,
@@ -60,7 +68,7 @@ M.setup = function()
 
   -- Update cached links for current file
   vim.api.nvim_create_autocmd("BufWritePost", {
-    pattern = vim.g.denote.directory .. "*.{org,md,norg}",
+    pattern = directory .. "*.{org,md,norg}",
     group = augroup,
     desc = "Update cached links for current file",
     callback = function(args)
@@ -71,7 +79,7 @@ M.setup = function()
 
   -- Oil highlighting
   vim.api.nvim_create_autocmd("BufReadPost", {
-    pattern = "oil://" .. vim.g.denote.directory,
+    pattern = "oil://" .. directory,
     group = augroup,
     desc = "Add file path highlighting to current Oil buffer",
     callback = function()

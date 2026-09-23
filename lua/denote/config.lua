@@ -16,6 +16,8 @@
 ---@field prompts string[]? File creation/renaming prompt order
 ---@field integrations Denote.Integrations.Configuration? Extensions configuration
 
+local Filesystem = require("denote.core.fs")
+
 ---@type table<string, string>
 local FILETYPE_EXTENSIONS = {
   org = ".org",
@@ -86,6 +88,7 @@ end
 ---@param opts Denote.Configuration
 ---@return Denote.Configuration
 local function normalize_config(opts)
+  opts.directory = Filesystem.canonical_path(opts.directory)
   if opts.directory:sub(-1) ~= "/" then
     opts.directory = opts.directory .. "/"
   end
