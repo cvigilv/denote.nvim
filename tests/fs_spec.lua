@@ -16,6 +16,11 @@ local function close_buffer(buffer)
   end
 end
 
+local function assert_buffer_path(buffer, path)
+  local buffer_path = vim.uv.fs_realpath(vim.api.nvim_buf_get_name(buffer))
+  H.eq(vim.uv.fs_realpath(path), buffer_path)
+end
+
 return {
   H.test("replace_file treats shell metacharacters as filename text", function()
     local directory = H.tmpdir()
@@ -41,7 +46,7 @@ return {
     H.truthy(vim.uv.fs_stat(new_path))
     H.eq(nil, vim.uv.fs_stat(marker))
     H.eq({ "original contents" }, vim.fn.readfile(new_path))
-    H.eq(vim.uv.fs_realpath(new_path), vim.api.nvim_buf_get_name(buffer))
+    assert_buffer_path(buffer, new_path)
 
     close_buffer(buffer)
     H.remove(directory)
@@ -61,7 +66,7 @@ return {
     H.matches("already exists", err)
     H.eq({ "source contents" }, vim.fn.readfile(old_path))
     H.eq({ "destination contents" }, vim.fn.readfile(new_path))
-    H.eq(vim.uv.fs_realpath(old_path), vim.api.nvim_buf_get_name(buffer))
+    assert_buffer_path(buffer, old_path)
 
     close_buffer(buffer)
     H.remove(directory)
@@ -80,7 +85,7 @@ return {
     H.matches("Cannot rename", err)
     H.truthy(vim.uv.fs_stat(old_path))
     H.eq({ "source contents" }, vim.fn.readfile(old_path))
-    H.eq(vim.uv.fs_realpath(old_path), vim.api.nvim_buf_get_name(buffer))
+    assert_buffer_path(buffer, old_path)
 
     close_buffer(buffer)
     H.remove(directory)
