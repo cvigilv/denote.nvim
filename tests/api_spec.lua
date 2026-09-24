@@ -24,6 +24,31 @@ return {
     H.remove(directory)
   end),
 
+  H.test("renaming a note moves its cached source entry", function()
+    local directory = H.tmpdir()
+    local old_path = directory .. "/20250102T030405--old-title.md"
+    local new_path = directory .. "/20250102T030405--new-title.md"
+    H.write_file(old_path, { "[Target](target.md)" })
+    vim.g.denote = { directory = directory .. "/", prompts = {} }
+    _G.denote_cache_links = {}
+
+    local Filesystem = require("denote.core.fs")
+    local Links = require("denote.links")
+    local old_cache_path = Filesystem.canonical_path(old_path)
+    local cached_links = Links.get_links(old_path)
+    local ok, err = pcall(require("denote.api").rename_file_title, old_path, "New title")
+
+    if not ok then
+      H.remove(directory)
+      error(err)
+    end
+
+    H.eq(nil, _G.denote_cache_links[old_cache_path])
+    H.eq(cached_links, _G.denote_cache_links[Filesystem.canonical_path(new_path)])
+    H.truthy(vim.uv.fs_stat(new_path))
+    H.remove(directory)
+  end),
+
   H.test("note creation sequences asynchronous prompts", function()
     local directory = H.tmpdir()
     vim.g.denote = {
