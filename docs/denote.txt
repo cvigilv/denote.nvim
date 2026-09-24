@@ -96,7 +96,7 @@ The following options are available: >lua
       directory = "~/notes/",               -- Directory for Denote files
       prompts = { "title", "keywords" },    -- Fields to prompt during creation
       integrations = {                      -- Integrations, refer to |denote-integrations|
-        oil = false,
+        highlights = false,
         telescope = false,
       },
     }
@@ -275,32 +275,28 @@ are optional and can be enabled or disabled through the `integrations` option
 in the configuration. In the configuration table, the `integrations` field is
 a table that can contain the following keys:
 
-{integrations.oil}
-    Enable syntax highlighting for Denote files in Oil.nvim file browser.
-    Requires Oil.nvim to be installed. Defaults to false.
+{integrations.highlights}
+    Highlight Denote filename components in every buffer. Defaults to false.
 
 {integrations.telescope}
     Enable Telescope pickers for searching and linking notes. Can be a boolean
     or a table with `enabled` and `opts` keys for customization. Requires
     Telescope to be installed. Defaults to false.
 
-                                                                  *denote-oil*
-4.1 stevearc/oil.nvim ~
+                                                           *denote-highlights*
+4.1 Filename highlights ~
 
-This integration enhances the functionality of `denote` within `oil` filetype
-buffers by implementing custom syntax highlighting for the various components
-of the Denote file naming convention. It aims to improve the visual clarity
-and user experience when navigating and managing Denote files through the Oil
-file explorer interface.
+This integration highlights each component of a Denote filename wherever it
+appears in a buffer. Because this can add noise outside file listings, it is
+disabled by default.
 
-SETUP                                                     *denote-oil-setup*
+SETUP                                              *denote-highlights-setup*
 
-To enable, add to your `denote.nvim` configuration the following: >lua
-    opts = {
-      ...
+Enable filename highlights in `vim.g.denote`: >lua
+    vim.g.denote = {
       integrations = {
-        oil = true
-      }
+        highlights = true,
+      },
     }
 <
 
