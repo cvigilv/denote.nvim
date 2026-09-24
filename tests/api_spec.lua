@@ -51,18 +51,20 @@ return {
 
   H.test("note creation sequences asynchronous prompts", function()
     local directory = H.tmpdir()
-    vim.g.denote = {
-      directory = directory .. "/",
+    vim.g.denote = require("denote.config").update_config({
+      directory = directory,
       filetype = "markdown-toml",
       prompts = { "title", "keywords" },
-    }
+    })
 
     local Naming = require("denote.naming")
     local original_timestamp = Naming.generate_timestamp
     local original_input = vim.ui.input
-    local original_cmd = vim.cmd
     local requests = {}
-    local commands = {}
+    local initial_buffer = vim.api.nvim_get_current_buf()
+    local created_buffer
+    local created_path
+    local created_lines
 
     Naming.generate_timestamp = function()
       return "20250102T030405"
@@ -70,37 +72,116 @@ return {
     vim.ui.input = function(options, callback)
       requests[#requests + 1] = { options = options, callback = callback }
     end
-    vim.cmd = function(command)
-      commands[#commands + 1] = command
-    end
 
     local prompt_counts = {}
-    local command_counts = {}
+    local buffers = {}
     local ok, err = pcall(function()
       require("denote.api").denote()
       prompt_counts[1] = #requests
-      command_counts[1] = #commands
+      buffers[1] = vim.api.nvim_get_current_buf()
       requests[1].callback("Project plan")
       prompt_counts[2] = #requests
-      command_counts[2] = #commands
+      buffers[2] = vim.api.nvim_get_current_buf()
       requests[2].callback("neovim lua")
-      command_counts[3] = #commands
+      created_buffer = vim.api.nvim_get_current_buf()
+      created_path = vim.api.nvim_buf_get_name(created_buffer)
+      created_lines = vim.api.nvim_buf_get_lines(created_buffer, 0, -1, false)
     end)
 
     Naming.generate_timestamp = original_timestamp
     vim.ui.input = original_input
-    vim.cmd = original_cmd
+    if created_buffer and vim.api.nvim_buf_is_valid(created_buffer) then
+      vim.api.nvim_buf_delete(created_buffer, { force = true })
+    end
     H.remove(directory)
     if not ok then
       error(err)
     end
 
     H.eq({ 1, 2 }, prompt_counts)
-    H.eq({ 0, 0, 2 }, command_counts)
+    H.eq({ initial_buffer, initial_buffer }, buffers)
     H.eq("[denote] New title: ", requests[1].options.prompt)
     H.eq("[denote] New keywords: ", requests[2].options.prompt)
-    H.eq("edit " .. directory .. "/20250102T030405--project-plan__neovim_lua.md", commands[1])
-    H.eq("startinsert", commands[2])
+    H.eq(
+      vim.g.denote.directory .. "20250102T030405--project-plan__neovim_lua.md",
+      created_path
+    )
+    H.eq('title      = "Project plan"', created_lines[2])
+    H.eq('tags       = ["neovim", "lua"]', created_lines[4])
+  end),
+
+  H.test("note creation initializes every configured filetype", function()
+    local directory = H.tmpdir()
+    local cases = {
+      { filetype = "markdown-toml", extension = ".md", first_line = "^%+%+%+$" },
+      { filetype = "markdown-yaml", extension = ".md", first_line = "^%-%-%-$" },
+      { filetype = "org", extension = ".org", first_line = "^#%+date:" },
+      { filetype = "neorg", extension = ".norg", first_line = "^@document%.meta$" },
+      { filetype = "text", extension = ".txt", first_line = "^date:" },
+    }
+    local Naming = require("denote.naming")
+    local original_timestamp = Naming.generate_timestamp
+    Naming.generate_timestamp = function()
+      return "20250102T030405"
+    end
+
+    local ok, err = pcall(function()
+      for _, case in ipairs(cases) do
+        vim.g.denote = require("denote.config").update_config({
+          directory = directory .. "/" .. case.filetype,
+          filetype = case.filetype,
+          prompts = {},
+        })
+        require("denote.api").denote()
+
+        local buffer = vim.api.nvim_get_current_buf()
+        local lines = vim.api.nvim_buf_get_lines(buffer, 0, -1, false)
+        H.eq(
+          vim.g.denote.directory .. "20250102T030405" .. case.extension,
+          vim.api.nvim_buf_get_name(buffer)
+        )
+        H.matches(case.first_line, lines[1])
+        H.eq("", lines[#lines])
+        H.eq(#lines, vim.api.nvim_win_get_cursor(0)[1])
+        vim.api.nvim_buf_delete(buffer, { force = true })
+      end
+    end)
+
+    Naming.generate_timestamp = original_timestamp
+    H.remove(directory)
+    if not ok then
+      error(err)
+    end
+  end),
+
+  H.test("note creation preserves an existing file", function()
+    local directory = H.tmpdir()
+    local path = directory .. "/20250102T030405.md"
+    H.write_file(path, { "existing content" })
+    vim.g.denote = require("denote.config").update_config({
+      directory = directory,
+      filetype = "markdown-toml",
+      prompts = {},
+    })
+
+    local Naming = require("denote.naming")
+    local original_timestamp = Naming.generate_timestamp
+    Naming.generate_timestamp = function()
+      return "20250102T030405"
+    end
+
+    local ok, err = pcall(require("denote.api").denote)
+    Naming.generate_timestamp = original_timestamp
+    local buffer = vim.api.nvim_get_current_buf()
+    if not ok then
+      H.remove(directory)
+      error(err)
+    end
+
+    H.eq({ "existing content" }, vim.api.nvim_buf_get_lines(buffer, 0, -1, false))
+    H.eq(false, vim.api.nvim_get_option_value("modified", { buf = buffer }))
+    vim.api.nvim_buf_delete(buffer, { force = true })
+    H.remove(directory)
   end),
 
   H.test("cancelling an interactive rename leaves the file alone", function()
