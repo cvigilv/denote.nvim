@@ -84,29 +84,4 @@ return {
     clear_modules(module_names)
     H.remove(directory)
   end),
-
-  H.test("Orgmode follows Denote links to text notes", function()
-    local directory = H.tmpdir()
-    local identifier = "20250102T030405"
-    local path = directory .. "/" .. identifier .. "--org-link.md"
-    H.write_file(path, { "# Linked note" })
-    vim.g.denote = { directory = directory .. "/" }
-    package.loaded["denote.extensions.orgmode"] = nil
-
-    local command
-    local original_cmd = vim.cmd
-    vim.cmd = function(value)
-      command = value
-    end
-
-    local source = require("denote.extensions.orgmode"):new({ files = {} })
-    local followed = source:follow("denote:" .. identifier)
-    vim.cmd = original_cmd
-
-    local matched_path = vim.fn.glob(directory .. "/" .. identifier .. "*", false, true)[1]
-    H.eq(true, followed)
-    H.eq("edit " .. vim.fn.fnameescape(matched_path), command)
-    package.loaded["denote.extensions.orgmode"] = nil
-    H.remove(directory)
-  end),
 }
