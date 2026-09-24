@@ -65,4 +65,67 @@ return {
     H.eq(Filesystem.canonical_path(path), Filesystem.canonical_path(command:sub(6)))
     H.remove(directory)
   end),
+
+  H.test("Orgmode opens external files with Neovim", function()
+    local directory = H.tmpdir()
+    local identifier = "20250102T030405"
+    local path = directory .. "/" .. identifier .. "--attachment.pdf"
+    H.write_file(path, { "PDF" })
+    local expected_path = Filesystem.canonical_path(path)
+
+    local opened
+    local notification
+    local original_open = vim.ui.open
+    local original_notify = vim.notify
+    vim.ui.open = function(filepath)
+      opened = filepath
+      return {}
+    end
+    vim.notify = function(message, level)
+      notification = { message = message, level = level }
+    end
+
+    local source = OrgLinkDenote:new({ files = directory })
+    local followed = source:follow("denote:" .. identifier)
+    vim.ui.open = original_open
+    vim.notify = original_notify
+
+    H.eq(true, followed)
+    H.eq(expected_path, Filesystem.canonical_path(opened))
+    H.eq({ message = "[denote] Opening " .. opened, level = vim.log.levels.INFO }, notification)
+    H.remove(directory)
+  end),
+
+  H.test("Orgmode reports external file launcher failures", function()
+    local directory = H.tmpdir()
+    local identifier = "20250102T030405"
+    local path = directory .. "/" .. identifier .. "--attachment.pdf"
+    H.write_file(path, { "PDF" })
+    local expected_path = Filesystem.canonical_path(path)
+
+    local opened
+    local notification
+    local original_open = vim.ui.open
+    local original_notify = vim.notify
+    vim.ui.open = function(filepath)
+      opened = filepath
+      return nil, "no system opener"
+    end
+    vim.notify = function(message, level)
+      notification = { message = message, level = level }
+    end
+
+    local source = OrgLinkDenote:new({ files = directory })
+    local followed = source:follow("denote:" .. identifier)
+    vim.ui.open = original_open
+    vim.notify = original_notify
+
+    H.eq(false, followed)
+    H.eq(expected_path, Filesystem.canonical_path(opened))
+    H.eq({
+      message = "[denote] Failed to open " .. opened .. ": no system opener",
+      level = vim.log.levels.ERROR,
+    }, notification)
+    H.remove(directory)
+  end),
 }
