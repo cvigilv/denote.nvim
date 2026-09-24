@@ -3,16 +3,14 @@ local Filesystem = require("denote.core.fs")
 local Naming = require("denote.naming")
 
 local function open(filepath)
-  local open_cmd
-  if vim.fn.has 'win32' == 1 then
-    open_cmd = 'start'
-  elseif vim.fn.has 'macunix' == 1 then
-    open_cmd = 'open'
-  else -- Assume Unix
-    open_cmd = 'xdg-open'
+  local process, err = vim.ui.open(filepath)
+  if process == nil then
+    vim.notify("[denote] Failed to open " .. filepath .. ": " .. err, vim.log.levels.ERROR)
+    return false
   end
-  vim.notify('[dneote] Opening URL with: ' .. open_cmd .. ' ' .. vim.fn.shellescape(filepath), vim.log.levels.INFO)
-  vim.fn.jobstart({ open_cmd, filepath }, { detach = true })
+
+  vim.notify("[denote] Opening " .. filepath, vim.log.levels.INFO)
+  return true
 end
 
 ---@class OrgLinkDenote:OrgLinkType
@@ -51,7 +49,7 @@ function OrgLinkDenote:follow(link)
       vim.cmd("edit " .. vim.fn.fnameescape(denote_file))
       return true
     else
-      open(denote_file)
+      return open(denote_file)
     end
   end
   return false
