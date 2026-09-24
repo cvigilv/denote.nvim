@@ -87,8 +87,8 @@ scheme. Validation uses the basename and ignores directory names.
 
 Denote requires Neovim 0.11 or newer.
 
-To use `denote.nvim`, configure it with your preferred options. The plugin
-provides sensible defaults but can be customized to fit your workflow.
+Set `vim.g.denote` before the plugin loads. Denote validates the table, fills
+in omitted defaults, and replaces it with the normalized configuration.
 
 CONFIGURATION                                               *denote-setup-config*
 
@@ -160,7 +160,8 @@ or YAML frontmatter, Org uses keyword metadata, Neorg uses an
 `@document.meta` block, and plain text uses a readable header. If the generated
 path already exists, Denote opens it without changing its contents.
 
-Returns: boolean indicating success.
+The function starts the configured prompts and returns before note creation
+finishes.
 
                                                          *denote-api-rename-file*
 3.2 Rename file to Denote format ~
@@ -181,7 +182,8 @@ Parameters:
     {filename?} (string) - File path to rename. If not provided, uses the
                          current buffer's file.
 
-Returns: boolean indicating success.
+The function starts the configured prompts and returns before the rename
+finishes.
 
                                                      *denote-api-rename-title*
 3.3 Rename file title ~
@@ -204,7 +206,8 @@ Parameters:
     {title?} (string)    - New title for the file. If not provided, the user is
                            prompted for it.
 
-Returns: boolean indicating success.
+Returns: boolean indicating success when {title} is provided. Without {title},
+the function starts a prompt and returns before the rename finishes.
 
                                                   *denote-api-rename-keywords*
 3.4 Rename file keywords ~
@@ -227,7 +230,9 @@ Parameters:
     {keywords?} (string) - New keywords for the file. If not provided, the
                            user is prompted for it.
 
-Returns: boolean indicating success.
+Returns: boolean indicating success when {keywords} is provided. Without
+{keywords}, the function starts a prompt and returns before the rename
+finishes.
 
                                                  *denote-api-rename-signature*
 3.5 Rename file signature ~
@@ -250,7 +255,9 @@ Parameters:
     {signature?} (string) - New signature for the file. If not provided, the
                             user is prompted for it.
 
-Returns: boolean indicating success.
+Returns: boolean indicating success when {signature} is provided. Without
+{signature}, the function starts a prompt and returns before the rename
+finishes.
 
                                                            *denote-api-backlinks*
 3.6 Show backlinks ~
@@ -278,7 +285,7 @@ in the configuration. In the configuration table, the `integrations` field is
 a table that can contain the following keys:
 
 {integrations.highlights}
-    Highlight Denote filename components in every buffer. Defaults to false.
+    Enable syntax matches for Denote filename components. Defaults to false.
 
 {integrations.telescope}
     Enable Telescope pickers for searching and linking notes. Can be a boolean
@@ -391,8 +398,8 @@ To overwrite or clear this groups, refer to |highlight|.
 
 REQUIREMENTS                                    *denote-telescope-requirements*
 
-This integrations requires the Telescope plugin to be installed and available.
-If Telescope is not found, an error will be raised.
+This integration requires Telescope to be installed and loaded before Denote.
+If Telescope is unavailable, Denote reports an error during startup.
 
 -----------------------------------------------------------------------------
 

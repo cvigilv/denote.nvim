@@ -34,41 +34,28 @@ For example:
 
 Denote requires Neovim 0.11 or newer.
 
-Example config via [lazy.nvim](https://github.com/folke/lazy.nvim)
+Set `vim.g.denote` before the plugin loads. For example, with
+[lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
----@class Denote.Integrations.Telescope.Configuration
----@field enabled boolean
----@field opts table?
-
----@class Denote.Integrations.Configuration
----@field oil boolean Activate `stevearc/oil.nvim` extension
----@field telescope boolean|Denote.Integrations.Telescope.Configuration
-
----@class Denote.Configuration
----@field filetype string? Default note file type
----@field directory string? Denote files directory
----@field prompts string[]? File creation/renaming prompt order
----@field integrations Denote.Integrations.Configuration? Extensions configuration
-
---@type Denote.Configuration
-vim.g.denote = {
-  filetype = "markdown-toml",
-  directory = "~/notes/",
-  prompts = { "title", "keywords" },
-  integrations = {
-    oil = false,
-    telescope = false,
-  },
+{
+  "cvigilv/denote.nvim",
+  init = function()
+    vim.g.denote = {
+      filetype = "markdown-toml",
+      directory = "~/notes/",
+      prompts = { "title", "keywords" },
+      integrations = {
+        highlights = false,
+        telescope = false,
+      },
+    }
+  end,
 }
 ```
 
-On setup, the plugin will create a global variable `denote` that contains the configuration
-table, which can be employed for extensions or other custom functionality:
-
-```lua
-vim.g.denote
-```
+The plugin validates this table, fills in omitted defaults, and stores the normalized
+configuration in `vim.g.denote`.
 
 # :Denote Command
 
@@ -86,32 +73,42 @@ Currently, the `:Denote` command supports the following subcommands:
 
 # Extensions
 
-## stevearc/oil.nvim
+## Filename highlights
 
-If you use [stevearc/oil.nvim](https://github.com/stevearc/oil.nvim) to manage your files, this
-extension will automatically set up custom highlighting for files that follow the Denote file-naming scheme
-whenever you open an `oil` buffer on the directory set in `vim.g.denote`.
+Set `integrations.highlights` to `true` to highlight the identifier, signature, title,
+keywords, and extension in Denote filenames. Matching is not limited to the configured notes
+directory, so this option is disabled by default.
 
-> Note: the highlighting is only applied when the `oil` extension is enabled in the config, but
-> it will highlight any file that follows the scheme, regardless of the directory.
+```lua
+vim.g.denote = {
+  integrations = {
+    highlights = true,
+  },
+}
+```
 
-<img width="1031" height="806" alt="stevearc/oil.nvim highlighting" src="https://github.com/user-attachments/assets/377adb4a-8060-4c8d-a03f-c3e41b2effba" />
+<img width="1031" height="806" alt="Denote filename highlighting in oil.nvim" src="https://github.com/user-attachments/assets/377adb4a-8060-4c8d-a03f-c3e41b2effba" />
 
 ## nvim-telescope/telescope.nvim
 
-Enable the [nvim-telescope/telescope.nvim](https://github.com/nvim-telescope/telescope.nvim)
-integration to load its extension and add these `:Denote` commands:
+Install [nvim-telescope/telescope.nvim](https://github.com/nvim-telescope/telescope.nvim)
+and set `integrations.telescope` to `true` to load the extension. If you use lazy.nvim, list
+Telescope as a dependency so it is available when Denote loads.
+
+The integration adds these subcommands in Denote buffers:
 
 - `:Denote search`, search for notes
 - `:Denote insert-link`, select a note and insert a link
 
-Both commands use the picker options in `integrations.telescope.opts`.
+To configure both pickers, use
+`integrations.telescope = { enabled = true, opts = { ... } }`. Denote passes `opts` to each
+picker.
 
 <img width="1031" height="806" alt="Simple telescope.nvim search" src="https://github.com/user-attachments/assets/6a29e965-0268-40a6-9ae5-d93bd17859df" />
 
 ## nvim-orgmode/orgmode
 
-if you use [nvim-orgmode/orgmode](https://github.com/nvim-orgmode/orgmode), you can enable the
+If you use [nvim-orgmode/orgmode](https://github.com/nvim-orgmode/orgmode), you can enable the
 `[[denote:...]]` link format. This is done by adding the following to your orgmode
 configuration:
 
