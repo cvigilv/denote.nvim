@@ -258,6 +258,36 @@ M.generate_toml_frontmatter = function(fields)
   return table.concat(lines, "\n") .. "\n"
 end
 
+-- Neorg metadata
+---@param fields table
+---@return string
+M.generate_neorg_frontmatter = function(fields)
+  local lines = { "@document.meta" }
+
+  if fields.title then
+    table.insert(lines, "title: " .. fields.title)
+  end
+
+  if fields.date then
+    local date_str = M.format_date_field(fields.date, M.format_date_markdown)
+    table.insert(lines, "created: " .. date_str)
+  end
+
+  if fields.keywords then
+    local clean_keywords = M.clean_keywords(fields.keywords)
+    if #clean_keywords > 0 then
+      table.insert(lines, "categories: " .. table.concat(clean_keywords, " "))
+    end
+  end
+
+  if fields.identifier then
+    table.insert(lines, "identifier: " .. fields.identifier)
+  end
+
+  table.insert(lines, "@end")
+  return table.concat(lines, "\n") .. "\n"
+end
+
 -- Plain text frontmatter
 ---@param filename string
 ---@return table|nil frontmatter
@@ -351,9 +381,13 @@ M.generate_frontmatter = function(fields, filetype)
     return M.generate_yaml_frontmatter(fields)
   elseif filetype == "markdown-toml" then
     return M.generate_toml_frontmatter(fields)
-  else
+  elseif filetype == "neorg" then
+    return M.generate_neorg_frontmatter(fields)
+  elseif filetype == "text" then
     return M.generate_text_frontmatter(fields)
   end
+
+  error("[denote] Unsupported frontmatter filetype: " .. filetype)
 end
 
 return M

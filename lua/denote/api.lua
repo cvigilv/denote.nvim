@@ -6,7 +6,9 @@ local Prompts = require("denote.ui.prompts")
 local Naming = require("denote.naming")
 local Filesystem = require("denote.core.fs")
 local Config = require("denote.config")
+local Frontmatter = require("denote.frontmatter")
 local Links = require("denote.links")
+local uv = vim.uv or vim.loop
 
 local M = {}
 
@@ -69,7 +71,7 @@ function M.denote()
   local identifier = Naming.generate_timestamp()
   local fields = {
     identifier = identifier,
-    date = Naming.timestamp_to_date(identifier),
+    date = identifier,
     extension = Config.filetype_extension(opts.filetype),
   }
 
@@ -83,8 +85,19 @@ function M.denote()
       error("[denote] The new filename doesn't look like a Denote filename")
     end
 
-    vim.cmd("edit " .. opts.directory .. filename)
-    vim.cmd("startinsert")
+    local filepath = opts.directory .. filename
+    local exists = uv.fs_stat(filepath) ~= nil
+    vim.api.nvim_cmd({ cmd = "edit", args = { filepath } }, {})
+
+    if not exists then
+      local frontmatter = Frontmatter.generate_frontmatter(values, opts.filetype)
+      local lines = vim.split(frontmatter, "\n", { plain = true })
+      local buffer = vim.api.nvim_get_current_buf()
+      vim.api.nvim_buf_set_lines(buffer, 0, -1, false, lines)
+      vim.api.nvim_win_set_cursor(0, { #lines, 0 })
+    end
+
+    vim.api.nvim_cmd({ cmd = "startinsert" }, {})
   end)
 end
 
