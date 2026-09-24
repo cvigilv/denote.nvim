@@ -87,8 +87,8 @@ end
 ---@param target string
 ---@return string|nil relpath
 function M.get_relative_path(base, target)
-  base = base or vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":p:h")
-  return vim.fs.relpath(vim.fs.normalize(base), vim.fs.normalize(target))
+  base = base or vim.fs.dirname(vim.api.nvim_buf_get_name(0))
+  return vim.fs.relpath(M.canonical_path(base), M.canonical_path(target))
 end
 
 return M

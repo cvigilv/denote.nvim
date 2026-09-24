@@ -28,8 +28,7 @@ local function format_entry(filepath)
     results["filename"] = ""
 
     -- Try to enhance with frontmatter data if this is a Denote file
-    local filetype = vim.filetype.match({ filename = filepath })
-    local fm_data = Frontmatter.parse_frontmatter(filepath, filetype)
+    local fm_data = Frontmatter.parse_frontmatter(filepath)
     if fm_data then
       -- Override with frontmatter data if available
       if fm_data.title then
@@ -105,6 +104,7 @@ return require("telescope").register_extension({
     insert_link = function(opts)
       opts = picker_opts(opts)
       local Naming = require("denote.naming")
+      local Filesystem = require("denote.core.fs")
       local Frontmatter = require("denote.frontmatter")
       local entry_display = require("telescope.pickers.entry_display")
       local finders = require("telescope.finders")
@@ -136,6 +136,7 @@ return require("telescope").register_extension({
 
       local files = vim.fn.glob(options.directory .. "/*", false, true)
       local bufnr = vim.api.nvim_get_current_buf()
+      local source_directory = vim.fs.dirname(vim.api.nvim_buf_get_name(bufnr))
 
       pickers
         .new(opts, {
@@ -154,16 +155,7 @@ return require("telescope").register_extension({
           sorter = conf.file_sorter({}),
           previewer = conf.file_previewer({}),
           attach_mappings = function(prompt_bufnr, _)
-            -- Register the action without binding it to a key
             actions.select_default:replace(function()
-              -- Helper function to calculate relative path
-              local function get_relative_path(entry_path)
-                return vim.fs.relpath(
-                  vim.fs.normalize(vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":p:h")),
-                  vim.fs.normalize(entry_path)
-                )
-              end
-
               -- Helper function to format link based on filetype
               local function format_link(description, path, filetype, is_list_item)
                 local prefix = is_list_item and "- " or ""
@@ -210,19 +202,20 @@ return require("telescope").register_extension({
               local links = {}
 
               for _, entry in ipairs(entries) do
-                local path = get_relative_path(entry.path) or entry.path
-                local description
+                local path = Filesystem.get_relative_path(source_directory, entry.path)
+                  or entry.path
+                local fields = Frontmatter.parse_frontmatter(entry.path)
+                  or Naming.parse_filename(entry.path)
+                local description = fields.title
+                if not description or description == "" then
+                  description = fields.identifier or ""
+                end
 
                 if not is_multiple then
-                  local fields = Frontmatter.parse_frontmatter(entry.path, filetype)
-                    or Naming.parse_filename(entry.path, false)
                   description = vim.fn.input({
                     prompt = "[denote] Link description: ",
-                    default = fields.title or "",
+                    default = description,
                   })
-                else
-                  description = Frontmatter.parse_frontmatter(entry.path, filetype)["title"]
-                    or Naming.parse_filename(entry.path)["identifier"]
                 end
 
                 table.insert(links, format_link(description, path, filetype, is_multiple))
