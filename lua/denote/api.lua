@@ -6,6 +6,7 @@ local Prompts = require("denote.ui.prompts")
 local Naming = require("denote.naming")
 local Filesystem = require("denote.core.fs")
 local Config = require("denote.config")
+local Links = require("denote.links")
 
 local M = {}
 
@@ -87,6 +88,14 @@ function M.denote()
   end)
 end
 
+local function replace_note_file(old_filepath, new_filepath)
+  local status = Filesystem.replace_file(old_filepath, new_filepath)
+  if status then
+    Links.rename_source(old_filepath, new_filepath)
+  end
+  return status
+end
+
 local function rename_component(filename, field, value)
   filename = filename or vim.fn.expand("%:p")
   if not Naming.is_denote(filename) then
@@ -102,7 +111,7 @@ local function rename_component(filename, field, value)
     components[field] = new_value
     local new_filename = Naming.generate_filename(components)
     local new_filepath = vim.g.denote.directory .. new_filename
-    return Filesystem.replace_file(filename, new_filepath --[[@as string]])
+    return replace_note_file(filename, new_filepath --[[@as string]])
   end
 
   if value ~= nil then
@@ -160,7 +169,7 @@ function M.rename_file(filename)
       error("[denote] The new filename doesn't look like a Denote filename")
     end
 
-    Filesystem.replace_file(
+    replace_note_file(
       filename,
       vim.fs.normalize(vim.fs.dirname(vim.fs.abspath(filename)) .. "/" .. new_filename)
     )

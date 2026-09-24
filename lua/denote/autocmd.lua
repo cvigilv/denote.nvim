@@ -68,12 +68,23 @@ M.setup = function()
 
   -- Update cached links for current file
   vim.api.nvim_create_autocmd("BufWritePost", {
-    pattern = directory .. "*.{org,md,norg}",
+    pattern = directory .. "*.{org,md,norg,txt}",
     group = augroup,
     desc = "Update cached links for current file",
     callback = function(args)
       logger.info("Updating cached links for file " .. args.file)
       require("denote.links").get_links(args.file)
+    end,
+  })
+
+  vim.api.nvim_create_autocmd("BufDelete", {
+    pattern = directory .. "*",
+    group = augroup,
+    desc = "Remove deleted files from the links cache",
+    callback = function(args)
+      if not uv.fs_stat(args.file) then
+        require("denote.links").remove_links(args.file)
+      end
     end,
   })
 
