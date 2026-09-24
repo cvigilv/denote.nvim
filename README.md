@@ -126,6 +126,9 @@ require("orgmode").setup({
 })
 ```
 
+The `files` option is required. Link completion scans this directory for valid Denote files
+using the supported note extensions: `.md`, `.norg`, `.org`, and `.txt`.
+
 # Tests
 
 Run the headless Neovim test suite with:

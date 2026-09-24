@@ -446,20 +446,16 @@ Smart File Opening ~
 
 Link Autocomplete ~
     When typing a Denote link, the plugin provides autocomplete suggestions
-    for available Denote file identifiers based on files in your Denote
-    directory.
+    for available Denote file identifiers. It scans the directory given by
+    {files} for valid Denote filenames ending in `.md`, `.norg`, `.org`, or
+    `.txt`.
 
 CONFIGURATION                                         *denote-orgmode-configuration*
 
 {files}
-    (required) Path to the Denote files directory. This is typically set to
-    `vim.g.denote.directory`.
-
-{config}
-    (optional) Advanced configuration table for customizing link patterns.
-    Supports the following fields:
-    - `denote_directory` (string) - Custom denote directory path (overrides
-      the `files` parameter if provided).
+    (required) Non-empty path to the Denote files directory. This is typically
+    set to `vim.g.denote.directory`. The integration normalizes the path before
+    using it for completion and link lookup.
 
 REQUIREMENTS                                         *denote-orgmode-requirements*
 
