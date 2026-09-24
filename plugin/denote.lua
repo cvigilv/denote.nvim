@@ -10,6 +10,10 @@ if not vim.g.loaded_denote_plugin then
   vim.g.denote = require("denote.config").update_config(vim.g.denote)
   _G.denote_cache_links = {}
 
+  if vim.g.denote.integrations.highlights then
+    require("denote.ui.highlights").setup()
+  end
+
   if vim.g.denote.integrations.telescope.enabled then
     require("telescope").load_extension("denote")
   end

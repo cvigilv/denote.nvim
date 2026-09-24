@@ -7,7 +7,7 @@
 ---@field opts table?
 
 ---@class Denote.Integrations.Configuration
----@field oil boolean Activate `stevearc/oil.nvim` extension
+---@field highlights boolean Highlight Denote filenames in buffers
 ---@field telescope boolean|Denote.Integrations.Telescope.Configuration
 
 ---@class Denote.Configuration
@@ -41,7 +41,7 @@ local defaults = {
   directory = "~/notes/",
   prompts = { "title", "keywords" }, -- "date", "title", "keywords", "signature", "extension"
   integrations = {
-    oil = false,
+    highlights = false,
     telescope = false,
   },
 }
@@ -63,7 +63,7 @@ local function validate_config(opts)
   end
 
   vim.validate("denote.integrations", opts.integrations, "table")
-  vim.validate("denote.integrations.oil", opts.integrations.oil, "boolean")
+  vim.validate("denote.integrations.highlights", opts.integrations.highlights, "boolean")
   vim.validate(
     "denote.integrations.telescope",
     opts.integrations.telescope,

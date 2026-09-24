@@ -54,7 +54,6 @@ return require("telescope").register_extension({
       local pickers = require("telescope.pickers")
       local conf = require("telescope.config").values
 
-      require("denote.ui.highlights").setup()
       local options = vim.g.denote
       -- Define how to build entry for Telescope
       local make_display = function(entry)
@@ -112,7 +111,6 @@ return require("telescope").register_extension({
       local conf = require("telescope.config").values
       local actions = require("telescope.actions")
       local action_state = require("telescope.actions.state")
-      require("denote.ui.highlights").setup()
       local options = vim.g.denote
 
       -- Define how to build entry for Telescope
@@ -239,7 +237,6 @@ return require("telescope").register_extension({
       local pickers = require("telescope.pickers")
       local conf = require("telescope.config").values
 
-      require("denote.ui.highlights").setup()
       -- Define how to build entry for Telescope
       local make_display = function(entry)
         local components = format_entry(entry.value)
