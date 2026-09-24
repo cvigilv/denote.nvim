@@ -88,16 +88,17 @@ M.setup = function()
     end,
   })
 
-  -- Oil highlighting
-  vim.api.nvim_create_autocmd("BufReadPost", {
-    pattern = "oil://" .. directory,
-    group = augroup,
-    desc = "Add file path highlighting to current Oil buffer",
-    callback = function()
-      logger.info("Setting up Oil highlighting")
-      require("denote.ui.highlights").setup()
-    end,
-  })
+  if vim.g.denote.integrations.oil then
+    vim.api.nvim_create_autocmd("BufReadPost", {
+      pattern = "oil://" .. directory,
+      group = augroup,
+      desc = "Add file path highlighting to current Oil buffer",
+      callback = function()
+        logger.info("Setting up Oil highlighting")
+        require("denote.ui.highlights").setup()
+      end,
+    })
+  end
 end
 
 return M
