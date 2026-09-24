@@ -1,6 +1,6 @@
-local CONFIG = vim.g.denote
+local Config = require("denote.config")
+local Filesystem = require("denote.core.fs")
 local Naming = require("denote.naming")
-
 
 local function open(filepath)
   local open_cmd
@@ -16,17 +16,19 @@ local function open(filepath)
 end
 
 ---@class OrgLinkDenote:OrgLinkType
----@field private files OrgFiles
----@field private config table Configuration for denote integration
+---@field private files string
 local OrgLinkDenote = {}
 OrgLinkDenote.__index = OrgLinkDenote
 
----@param opts { files: OrgFiles, config?: table }
+---@param opts { files: string }
 function OrgLinkDenote:new(opts)
-  local config = vim.tbl_deep_extend("force", CONFIG, opts.config or {})
+  vim.validate("denote.orgmode", opts, "table")
+  vim.validate("denote.orgmode.files", opts.files, function(value)
+    return type(value) == "string" and value ~= ""
+  end, "non-empty string")
+
   return setmetatable({
-    files = opts.files,
-    config = config,
+    files = Filesystem.canonical_path(opts.files),
   }, OrgLinkDenote)
 end
 
@@ -38,17 +40,18 @@ end
 ---@param link string
 ---@return boolean
 function OrgLinkDenote:follow(link)
-  local denote_id = tostring(self:_parse(link))
-  if denote_id:match(Naming.PATTERNS.identifier) then
-    local identifier = tostring(self:_parse(link))
-    local denote_file = self:_find_denote_file(identifier)
-    if denote_file ~= nil then
-      if vim.tbl_contains({"md", "org", "txt", "norg"}, vim.fn.fnamemodify(denote_file, ":e")) then
-        vim.cmd("edit " .. vim.fn.fnameescape(denote_file))
-        return true
-      else
-        open(denote_file)
-      end
+  local identifier = self:_parse(link)
+  if not identifier or not identifier:match("^" .. Naming.PATTERNS.identifier .. "$") then
+    return false
+  end
+
+  local denote_file = self:_find_denote_file(identifier)
+  if denote_file ~= nil then
+    if vim.tbl_contains({ "md", "org", "txt", "norg" }, vim.fn.fnamemodify(denote_file, ":e")) then
+      vim.cmd("edit " .. vim.fn.fnameescape(denote_file))
+      return true
+    else
+      open(denote_file)
     end
   end
   return false
@@ -84,9 +87,7 @@ end
 ---@param denote_id string
 ---@return string|nil
 function OrgLinkDenote:_find_denote_file(denote_id)
-  local denote_dir = vim.fn.expand(self.config.directory)
-  local pattern = string.format("%s%s*", denote_dir, denote_id)
-  local matches = vim.fn.glob(pattern, false, true)
+  local matches = vim.fn.globpath(self.files, denote_id .. "*", false, true)
   if #matches > 0 then
     if #matches > 1 then
       vim.notify("More than one entry with ID: " .. denote_id, vim.log.levels.INFO)
@@ -100,22 +101,20 @@ end
 ---@private
 ---@return table[]
 function OrgLinkDenote:_get_denote_files()
-  local denote_dir = vim.fn.expand(self.config.denote_directory)
   local files = {}
+  local matches = {}
 
-  -- Build glob pattern for all denote files
-  local extensions = table.concat({".md", ".org", ".txt"}, ",")
-  local pattern = string.format("%s/*.{%s}", denote_dir, extensions)
-  local matches = vim.fn.glob(pattern, false, true)
+  for _, extension in ipairs(Config.note_extensions()) do
+    vim.list_extend(matches, vim.fn.globpath(self.files, "*" .. extension, false, true))
+  end
+  table.sort(matches)
 
   for _, filepath in ipairs(matches) do
-    local filename = vim.fn.fnamemodify(filepath, ":t")
-    local id = filename:match(self.config.id_pattern)
-    if id then
-      local title = filename:match(self.config.title_pattern) or ""
+    local components = Naming.parse_filename(filepath)
+    if components.identifier ~= "" then
       table.insert(files, {
-        id = id,
-        title = title,
+        id = components.identifier,
+        title = components.title,
         filepath = filepath,
       })
     end
