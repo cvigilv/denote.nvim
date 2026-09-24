@@ -30,7 +30,9 @@ For example:
 - Create new notes interactively
 - Extensions for integrating with other plugins (e.g. telescope.nvim)
 
-# Installation / Config
+# Installation and configuration
+
+Denote requires Neovim 0.11 or newer.
 
 Example config via [lazy.nvim](https://github.com/folke/lazy.nvim)
 
