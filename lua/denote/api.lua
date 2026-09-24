@@ -17,6 +17,10 @@ local SUBCOMMANDS = {
   ["rename-file-title"] = "rename_file_title",
 }
 
+local function is_denote_buffer()
+  return vim.tbl_contains(vim.split(vim.bo.filetype, ".", { plain = true }), "denote")
+end
+
 ---Dispatch a Denote command.
 ---@param args string[]
 ---@return any
@@ -33,6 +37,9 @@ function M.dispatch(args)
   if not handler then
     error("[denote] Unsupported subcommand: " .. name)
   end
+  if not is_denote_buffer() then
+    error("[denote] Subcommands require a Denote buffer")
+  end
   return M[handler]()
 end
 
@@ -40,6 +47,10 @@ end
 ---@param arg_lead string
 ---@return string[]
 function M.complete(arg_lead)
+  if not is_denote_buffer() then
+    return {}
+  end
+
   local matches = {}
   for name in pairs(SUBCOMMANDS) do
     if vim.startswith(name, arg_lead) then
