@@ -54,7 +54,7 @@ return {
     vim.g.denote = require("denote.config").update_config({
       directory = directory,
       filetype = "markdown-toml",
-      prompts = { "title", "keywords" },
+      prompts = { "signature", "title", "keywords" },
     })
 
     local Naming = require("denote.naming")
@@ -79,10 +79,13 @@ return {
       require("denote.api").denote()
       prompt_counts[1] = #requests
       buffers[1] = vim.api.nvim_get_current_buf()
-      requests[1].callback("Project plan")
+      requests[1].callback("1a")
       prompt_counts[2] = #requests
       buffers[2] = vim.api.nvim_get_current_buf()
-      requests[2].callback("neovim lua")
+      requests[2].callback("Project plan")
+      prompt_counts[3] = #requests
+      buffers[3] = vim.api.nvim_get_current_buf()
+      requests[3].callback("neovim lua")
       created_buffer = vim.api.nvim_get_current_buf()
       created_path = vim.api.nvim_buf_get_name(created_buffer)
       created_lines = vim.api.nvim_buf_get_lines(created_buffer, 0, -1, false)
@@ -98,16 +101,22 @@ return {
       error(err)
     end
 
-    H.eq({ 1, 2 }, prompt_counts)
-    H.eq({ initial_buffer, initial_buffer }, buffers)
-    H.eq("[denote] New title: ", requests[1].options.prompt)
-    H.eq("[denote] New keywords: ", requests[2].options.prompt)
+    H.eq({ 1, 2, 3 }, prompt_counts)
+    H.eq({ initial_buffer, initial_buffer, initial_buffer }, buffers)
+    H.eq("[denote] New signature: ", requests[1].options.prompt)
+    H.eq("[denote] New title: ", requests[2].options.prompt)
+    H.eq("[denote] New keywords: ", requests[3].options.prompt)
     H.eq(
-      vim.g.denote.directory .. "20250102T030405--project-plan__neovim_lua.md",
+      vim.g.denote.directory .. "20250102T030405==1a--project-plan__neovim_lua.md",
       created_path
     )
+    H.eq("+++", created_lines[1])
     H.eq('title      = "Project plan"', created_lines[2])
+    H.matches("^date%s+=%s+2025%-01%-02T03:04:05", created_lines[3])
     H.eq('tags       = ["neovim", "lua"]', created_lines[4])
+    H.eq('identifier = "20250102T030405"', created_lines[5])
+    H.eq("+++", created_lines[6])
+    H.eq("", created_lines[7])
   end),
 
   H.test("note creation initializes every configured filetype", function()
