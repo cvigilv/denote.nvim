@@ -14,21 +14,33 @@ local function load_command()
 end
 
 return {
-  H.test("the Denote command and completion are available at plugin load", function()
+  H.test("the Denote command is available in every buffer", function()
     local directory = load_command()
 
     H.truthy(vim.api.nvim_get_commands({ builtin = false }).Denote)
+    H.remove(directory)
+  end),
+
+  H.test("Denote subcommands are only completed in Denote buffers", function()
+    local directory = load_command()
+
+    vim.bo.filetype = "lua"
+    H.eq({}, vim.fn.getcompletion("Denote ", "cmdline"))
+
+    vim.bo.filetype = "markdown.denote"
     H.eq({
+      "backlinks",
       "rename-file",
       "rename-file-keywords",
       "rename-file-signature",
       "rename-file-title",
-    }, vim.fn.getcompletion("Denote rename-file", "cmdline"))
+    }, vim.fn.getcompletion("Denote ", "cmdline"))
     H.remove(directory)
   end),
 
   H.test("the Denote command dispatches every core subcommand", function()
     local directory = load_command()
+    vim.bo.filetype = "markdown.denote"
     local api = require("denote.api")
     local names = {
       "denote",
@@ -68,8 +80,20 @@ return {
     H.eq(names, calls)
   end),
 
+  H.test("the Denote command rejects subcommands outside Denote buffers", function()
+    local directory = load_command()
+    vim.bo.filetype = "lua"
+
+    local ok, err = pcall(vim.cmd, "Denote backlinks")
+
+    H.eq(false, ok)
+    H.matches("Subcommands require a Denote buffer", err)
+    H.remove(directory)
+  end),
+
   H.test("the Denote command rejects invalid arguments", function()
     local directory = load_command()
+    vim.bo.filetype = "markdown.denote"
 
     local unsupported, unsupported_error = pcall(vim.cmd, "Denote unknown")
     local excess, excess_error = pcall(vim.cmd, "Denote backlinks extra")
