@@ -136,6 +136,29 @@ M.get_links = function(filepath)
   return links
 end
 
+---@param filepath string
+M.remove_links = function(filepath)
+  if _G.denote_cache_links then
+    _G.denote_cache_links[Filesystem.canonical_path(filepath)] = nil
+  end
+end
+
+---@param old_filepath string
+---@param new_filepath string
+M.rename_source = function(old_filepath, new_filepath)
+  if not _G.denote_cache_links then
+    return
+  end
+
+  old_filepath = Filesystem.canonical_path(old_filepath)
+  new_filepath = Filesystem.canonical_path(new_filepath)
+  local links = _G.denote_cache_links[old_filepath]
+  _G.denote_cache_links[old_filepath] = nil
+  if links then
+    _G.denote_cache_links[new_filepath] = links
+  end
+end
+
 -- Get backlinks for a given file
 ---@param filepath string The path of the file to find "from" links for
 ---@return table from_links Array of file paths that link to the given file
