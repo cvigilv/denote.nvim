@@ -153,6 +153,11 @@ Lua function: >lua
     require("denote.api").denote()
 <
 
+New notes start with metadata for the configured filetype. Markdown uses TOML
+or YAML frontmatter, Org uses keyword metadata, Neorg uses an
+`@document.meta` block, and plain text uses a readable header. If the generated
+path already exists, Denote opens it without changing its contents.
+
 Returns: boolean indicating success.
 
                                                          *denote-api-rename-file*
