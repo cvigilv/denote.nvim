@@ -74,13 +74,13 @@ local function identifier_to_path(identifier)
   return path[1]
 end
 
-local function resolve_link(link)
+local function resolve_link(link, base)
   if link:match("^denote:") then
     link = identifier_to_path(link:gsub("^denote:", ""))
   elseif link:match("^file:") then
     link = link:gsub("^file:", "")
   end
-  return vim.fn.resolve(link)
+  return Filesystem.canonical_path(link, base)
 end
 
 local function extract_links(line, ext)
@@ -97,7 +97,7 @@ local function extract_links(line, ext)
         or link:match("^%.%./")
         or link:match("^[^:]+/")
       then
-        table.insert(links, resolve_link(link))
+        table.insert(links, link)
       end
     end
   elseif ext == "norg" then
@@ -121,12 +121,13 @@ M.get_links = function(filepath)
   local content = vim.fn.readfile(filepath)
   local filetype = vim.filetype.match({ filename = filepath })
   local links = {}
+  local source_directory = vim.fs.dirname(filepath)
   if content ~= nil then
     local linenr = 0
     for _, line in ipairs(content) do
       linenr = linenr + 1
       for _, path in ipairs(extract_links(line, filetype)) do
-        local link_data = { path = path, linenr = linenr }
+        local link_data = { path = resolve_link(path, source_directory), linenr = linenr }
         table.insert(links, link_data)
       end
     end
@@ -143,7 +144,7 @@ M.get_backlinks = function(filepath)
   local backlinks = {}
   for fp, links in pairs(_G.denote_cache_links) do
     for _, link in ipairs(links) do
-      if Filesystem.canonical_path(link.path) == filepath then
+      if link.path == filepath then
         local ft = vim.filetype.match({ filename = fp })
         local components = require("denote.frontmatter").parse_frontmatter(fp, ft)
           or require("denote.naming").parse_filename(fp)
