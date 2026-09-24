@@ -85,6 +85,8 @@ scheme. Validation uses the basename and ignores directory names.
 ==============================================================================
 2. Setup                                                        *denote-setup*
 
+Denote requires Neovim 0.11 or newer.
+
 To use `denote.nvim`, configure it with your preferred options. The plugin
 provides sensible defaults but can be customized to fit your workflow.
 
