@@ -5,6 +5,34 @@ local Filesystem = require("denote.core.fs")
 local Links = require("denote.links")
 local uv = vim.uv or vim.loop
 
+local function unload_plugin()
+  pcall(vim.api.nvim_del_user_command, "Denote")
+  pcall(vim.api.nvim_del_augroup_by_name, "denote")
+  package.loaded["denote.ui.highlights"] = nil
+  vim.g.loaded_denote_plugin = nil
+end
+
+local function with_plugin(config, highlights, run)
+  local directory = H.tmpdir()
+  local previous_config = vim.g.denote
+  config.directory = directory
+  unload_plugin()
+  package.loaded["denote.ui.highlights"] = highlights
+  vim.g.denote = config
+
+  local ok, err = pcall(function()
+    vim.cmd("runtime plugin/denote.lua")
+    run()
+  end)
+
+  unload_plugin()
+  vim.g.denote = previous_config
+  H.remove(directory)
+  if not ok then
+    error(err)
+  end
+end
+
 return {
   H.test("link cache scan retries after the note directory appears", function()
     local parent = H.tmpdir()
@@ -96,5 +124,25 @@ return {
     if not ok then
       error(err)
     end
+  end),
+
+  H.test("disabled filename highlights skip setup", function()
+    local setup_calls = 0
+    local highlights = {
+      setup = function()
+        setup_calls = setup_calls + 1
+      end,
+    }
+
+    with_plugin({ integrations = { highlights = false } }, highlights, function()
+      H.eq(0, setup_calls)
+    end)
+  end),
+
+  H.test("enabled filename highlights define syntax matches", function()
+    with_plugin({ integrations = { highlights = true } }, nil, function()
+      H.matches("Denote%s+xxx%s+match", vim.fn.execute("syntax list Denote"))
+      H.matches("contained", vim.fn.execute("syntax list DenoteDate"))
+    end)
   end),
 }

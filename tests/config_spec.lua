@@ -15,7 +15,7 @@ return {
     H.eq(Filesystem.canonical_path("/tmp/denote-notes") .. "/", config.directory)
     H.eq("markdown-toml", config.filetype)
     H.eq({ "title", "keywords" }, config.prompts)
-    H.eq(false, config.integrations.oil)
+    H.eq(false, config.integrations.highlights)
     H.eq({ enabled = false, opts = {} }, config.integrations.telescope)
   end),
 
@@ -57,7 +57,10 @@ return {
     fails_with("denote%.prompts%[2%]:.-got missing", { prompts = { "title", "missing" } })
   end),
 
-  H.test("configuration rejects malformed telescope options", function()
+  H.test("configuration rejects malformed integration options", function()
+    fails_with("integrations%.highlights:.-got string", {
+      integrations = { highlights = "yes" },
+    })
     fails_with("telescope%.enabled:.-got string", {
       integrations = { telescope = { enabled = "yes", opts = {} } },
     })

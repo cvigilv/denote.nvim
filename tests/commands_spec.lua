@@ -7,7 +7,7 @@ local function load_command()
   vim.g.denote = {
     directory = directory .. "/",
     prompts = {},
-    integrations = { oil = false, telescope = false },
+    integrations = { highlights = false, telescope = false },
   }
   vim.cmd("runtime plugin/denote.lua")
   return directory
