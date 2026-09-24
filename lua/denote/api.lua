@@ -20,6 +20,15 @@ local SUBCOMMANDS = {
   ["rename-file-title"] = "rename_file_title",
 }
 
+local TELESCOPE_SUBCOMMANDS = {
+  ["insert-link"] = "insert_link",
+  ["search"] = "search",
+}
+
+local function telescope_enabled()
+  return vim.g.denote.integrations.telescope.enabled
+end
+
 local function is_denote_buffer()
   return vim.tbl_contains(vim.split(vim.bo.filetype, ".", { plain = true }), "denote")
 end
@@ -37,11 +46,16 @@ function M.dispatch(args)
 
   local name = args[1]
   local handler = SUBCOMMANDS[name]
-  if not handler then
+  local telescope_handler = telescope_enabled() and TELESCOPE_SUBCOMMANDS[name]
+  if not handler and not telescope_handler then
     error("[denote] Unsupported subcommand: " .. name)
   end
   if not is_denote_buffer() then
     error("[denote] Subcommands require a Denote buffer")
+  end
+  if telescope_handler then
+    local opts = vim.deepcopy(vim.g.denote.integrations.telescope.opts)
+    return require("telescope").extensions.denote[telescope_handler](opts)
   end
   return M[handler]()
 end
@@ -58,6 +72,13 @@ function M.complete(arg_lead)
   for name in pairs(SUBCOMMANDS) do
     if vim.startswith(name, arg_lead) then
       matches[#matches + 1] = name
+    end
+  end
+  if telescope_enabled() then
+    for name in pairs(TELESCOPE_SUBCOMMANDS) do
+      if vim.startswith(name, arg_lead) then
+        matches[#matches + 1] = name
+      end
     end
   end
   table.sort(matches)
