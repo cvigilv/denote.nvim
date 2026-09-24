@@ -36,11 +36,15 @@ return {
     H.remove(directory)
   end),
 
-  H.test("frontmatter falls back to plain text", function()
-    local generated = Frontmatter.generate_frontmatter(fields, "text")
+  H.test("frontmatter supports Neorg and plain text", function()
+    local neorg = Frontmatter.generate_frontmatter(fields, "neorg")
+    local text = Frontmatter.generate_frontmatter(fields, "text")
 
-    H.matches("^title:%s+Test note", generated)
-    H.matches("tags:%s+lua%s+neovimplugin", generated)
-    H.matches("identifier:%s+20250102T030405", generated)
+    H.matches("^@document%.meta", neorg)
+    H.matches("categories:%s+lua%s+neovimplugin", neorg)
+    H.matches("identifier:%s+20250102T030405", neorg)
+    H.matches("^title:%s+Test note", text)
+    H.matches("tags:%s+lua%s+neovimplugin", text)
+    H.matches("identifier:%s+20250102T030405", text)
   end),
 }
