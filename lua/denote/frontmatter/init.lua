@@ -352,7 +352,7 @@ end
 ---@return table|nil frontmatter
 M.parse_frontmatter = function(filename, filetype)
   filename = filename or vim.api.nvim_buf_get_name(0)
-  filetype = filetype or vim.bo.filetype
+  filetype = filetype or vim.filetype.match({ filename = filename }) or vim.bo.filetype
 
   if filetype == "org" then
     return M.parse_org_frontmatter(filename)
