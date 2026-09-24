@@ -441,8 +441,10 @@ Smart File Opening ~
     The plugin intelligently handles different file types:
     - Supported denote file types (.md, .org, .txt, .norg) are opened in
       Neovim
-    - Other file types following the denote convention are opened with the
-      system's default application
+    - Other file types following the denote convention are passed to Neovim's
+      system opener, which selects the platform's default application
+    - If no system opener is available, the link remains unhandled and the
+      plugin reports the error
 
 Link Autocomplete ~
     When typing a Denote link, the plugin provides autocomplete suggestions
