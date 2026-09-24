@@ -287,11 +287,10 @@ a table that can contain the following keys:
                                                                   *denote-oil*
 4.1 stevearc/oil.nvim ~
 
-This integration enhances the functionality of `denote` within `oil` filetype
-buffers by implementing custom syntax highlighting for the various components
-of the Denote file naming convention. It aims to improve the visual clarity
-and user experience when navigating and managing Denote files through the Oil
-file explorer interface.
+This integration highlights the date, signature, title, keywords, and extension
+in Denote filenames shown by Oil. It runs only in the Oil buffer for the
+configured note directory. Denote canonicalizes the directory before matching
+Oil's URI.
 
 SETUP                                                     *denote-oil-setup*
 
