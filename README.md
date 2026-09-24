@@ -97,14 +97,13 @@ whenever you open an `oil` buffer on the directory set in `vim.g.denote`.
 
 ## nvim-telescope/telescope.nvim
 
-If you use [nvim-telescope/telescope.nvim](https://github.com/nvim-telescope/telescope.nvim),
-you can register the `telescope` extension to access to some functionality directly from
-telescope. Currently, the following pickers are implemented:
+Enable the [nvim-telescope/telescope.nvim](https://github.com/nvim-telescope/telescope.nvim)
+integration to load its extension and add these `:Denote` commands:
 
-- `:Telescope denote search`, for searching notes in you Denote silo
-- `:Telescope denote insert-link`, for inserting links interactively
-- `:Telescope denote link`, for inserting links
-- `:Telescope denote backlinks`, for searching backlinks of current buffer
+- `:Denote search`, search for notes
+- `:Denote insert-link`, select a note and insert a link
+
+Both commands use the picker options in `integrations.telescope.opts`.
 
 <img width="1031" height="806" alt="Simple telescope.nvim search" src="https://github.com/user-attachments/assets/6a29e965-0268-40a6-9ae5-d93bd17859df" />
 

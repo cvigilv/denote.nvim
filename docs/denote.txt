@@ -318,44 +318,36 @@ To overwrite or clear this groups, refer to |highlight|.
                                                            *denote-telescope*
 4.2 nvim-telescope/telescope.nvim ~
 
-This module provides a Telescope integration for the Denote plugin, allowing
-users to search and navigate Denote files using Telescope's interface.
-
-Enabling this integrations will override the default behaviour for the
-following Denote commands:
-
-- `search`
-- `insert-link`
-- `link`
+This module uses Telescope to search Denote files and insert links. Enabling
+the integration loads the Telescope extension and adds the `search` and
+`insert-link` subcommands to |denote-api|.
 
 SETUP                                                 *denote-telescope-setup*
 
-To enable this integration, add to your `denote.nvim` configuration the
-following: >lua
-    opts = {
-      ...
+Enable the integration in `vim.g.denote`: >lua
+    vim.g.denote = {
       integrations = {
-        telescope = true
-      }
+        telescope = true,
+      },
     }
 <
 
-This will enable the integration with it's default configuration, which is
-the following: >lua
-    opts = {
-        ...
-        integrations = {
-            telescope = {
-                enabled = true,
-                opts = {}
-            }
-        }
+To configure the pickers, use a table with `enabled` and `opts` keys
+instead: >lua
+    vim.g.denote = {
+      integrations = {
+        telescope = {
+          enabled = true,
+          opts = {
+            layout_strategy = "vertical",
+          },
+        },
+      },
     }
 <
 
-You can customize the look and feel of the picker by provinding options inside
-the `integrations.telescope.opts` table. For more information refer to
-|telescope|.
+The plugin passes `integrations.telescope.opts` to each picker. For available
+options, see |telescope|.
 
 OPTIONS                                             *denote-telescope-options*
 
@@ -367,15 +359,12 @@ OPTIONS                                             *denote-telescope-options*
 
 USAGE                                                 *denote-telescope-usage*
 
-After setup, you can use the following excommands:
+After setup, use these commands from a Denote buffer:
 >vim
-    Denote search        " Search file in denote silo
+    :Denote search
 
-    Denote insert-link   " Insert link to denote file in an interactive manner
-
-    Denote link          " Insert link to denote file in an non-interactive manner
+    :Denote insert-link
 <
-This will open a Telescope picker to handle this interactions.
 
 DISPLAY FORMAT                                      *denote-telescope-display*
 
