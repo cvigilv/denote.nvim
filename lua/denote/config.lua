@@ -111,6 +111,18 @@ function M.filetype_extension(filetype)
   return FILETYPE_EXTENSIONS[filetype]
 end
 
+---@return string[]
+function M.note_extensions()
+  local extensions = {}
+  for _, extension in pairs(FILETYPE_EXTENSIONS) do
+    extensions[extension] = true
+  end
+
+  local result = vim.tbl_keys(extensions)
+  table.sort(result)
+  return result
+end
+
 ---Update defaults with user configuration
 ---@param opts Denote.Configuration|nil User provided configuration table
 ---@return Denote.Configuration opts Updated default configuration table with user configuration
