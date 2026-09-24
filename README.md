@@ -70,6 +70,9 @@ vim.g.denote
 
 # :Denote Command
 
+The bare `:Denote` command is available in every buffer. Its subcommands are listed and
+accepted only when the current buffer has a Denote filetype, such as `markdown.denote`.
+
 Currently, the `:Denote` command supports the following subcommands:
 
 - `:Denote`, create a new note interactively
