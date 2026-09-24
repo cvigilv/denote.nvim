@@ -2,6 +2,12 @@
 ---@author Carlos Vigil-Vásquez
 ---@license MIT 2025
 
+local function picker_opts(opts)
+  local telescope = vim.g.denote.integrations and vim.g.denote.integrations.telescope
+  local configured = type(telescope) == "table" and telescope.opts or {}
+  return vim.tbl_deep_extend("force", {}, configured, opts or {})
+end
+
 local function format_entry(filepath)
   local Naming = require("denote.naming")
   local Frontmatter = require("denote.frontmatter")
@@ -43,6 +49,7 @@ end
 return require("telescope").register_extension({
   exports = {
     search = function(opts)
+      opts = picker_opts(opts)
       local entry_display = require("telescope.pickers.entry_display")
       local finders = require("telescope.finders")
       local pickers = require("telescope.pickers")
@@ -96,6 +103,7 @@ return require("telescope").register_extension({
         :find()
     end,
     insert_link = function(opts)
+      opts = picker_opts(opts)
       local Naming = require("denote.naming")
       local Frontmatter = require("denote.frontmatter")
       local entry_display = require("telescope.pickers.entry_display")
@@ -232,6 +240,7 @@ return require("telescope").register_extension({
         :find()
     end,
     backlinks = function(opts)
+      opts = picker_opts(opts)
       local entry_display = require("telescope.pickers.entry_display")
       local finders = require("telescope.finders")
       local pickers = require("telescope.pickers")

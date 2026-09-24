@@ -54,8 +54,7 @@ function M.dispatch(args)
     error("[denote] Subcommands require a Denote buffer")
   end
   if telescope_handler then
-    local opts = vim.deepcopy(vim.g.denote.integrations.telescope.opts)
-    return require("telescope").extensions.denote[telescope_handler](opts)
+    return require("telescope").extensions.denote[telescope_handler]()
   end
   return M[handler]()
 end
