@@ -4,7 +4,6 @@
 
 local M = {}
 
--- Define highlight groups related to Denote
 M.setup = function()
   local logger = require("denote.core.logger")
   logger.info(
