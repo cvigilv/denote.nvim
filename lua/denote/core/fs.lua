@@ -6,15 +6,20 @@ local uv = vim.uv or vim.loop
 
 local M = {}
 
-local function absolute_path(path)
+local function absolute_path(path, base)
+  path = vim.fs.normalize(path, { expand_env = false })
+  if base and vim.fn.isabsolutepath(path) == 0 then
+    path = vim.fs.joinpath(base, path)
+  end
   return vim.fs.normalize(vim.fs.abspath(path), { expand_env = false })
 end
 
 ---Resolve a path to a normalized absolute path, including symlinks when possible.
 ---@param path string
+---@param base string? Directory used to resolve a relative path
 ---@return string
-function M.canonical_path(path)
-  path = absolute_path(path)
+function M.canonical_path(path, base)
+  path = absolute_path(path, base)
   local resolved = uv.fs_realpath(path)
   if resolved then
     return absolute_path(resolved)
