@@ -5,6 +5,16 @@ local Filesystem = require("denote.core.fs")
 local Links = require("denote.links")
 local uv = vim.uv or vim.loop
 
+local function oil_autocmds()
+  local result = {}
+  for _, autocmd in ipairs(vim.api.nvim_get_autocmds({ group = "denote" })) do
+    if autocmd.desc == "Add file path highlighting to current Oil buffer" then
+      result[#result + 1] = autocmd
+    end
+  end
+  return result
+end
+
 return {
   H.test("link cache scan retries after the note directory appears", function()
     local parent = H.tmpdir()
@@ -91,6 +101,58 @@ return {
     if buffer and vim.api.nvim_buf_is_valid(buffer) then
       vim.api.nvim_buf_delete(buffer, { force = true })
     end
+    pcall(vim.api.nvim_del_augroup_by_name, "denote")
+    H.remove(directory)
+    if not ok then
+      error(err)
+    end
+  end),
+
+  H.test("disabled Oil integration registers no autocmd", function()
+    local directory = H.tmpdir()
+    vim.g.denote = Config.update_config({
+      directory = directory,
+      integrations = { oil = false },
+    })
+
+    local ok, err = pcall(function()
+      Autocmd.setup()
+      H.eq({}, oil_autocmds())
+    end)
+
+    pcall(vim.api.nvim_del_augroup_by_name, "denote")
+    H.remove(directory)
+    if not ok then
+      error(err)
+    end
+  end),
+
+  H.test("enabled Oil integration matches the canonical directory", function()
+    local directory = H.tmpdir()
+    vim.g.denote = Config.update_config({
+      directory = directory .. "/.",
+      integrations = { oil = true },
+    })
+    local expected_pattern = "oil://" .. vim.g.denote.directory
+    local original_highlights = package.loaded["denote.ui.highlights"]
+    local setup_calls = 0
+    package.loaded["denote.ui.highlights"] = {
+      setup = function()
+        setup_calls = setup_calls + 1
+      end,
+    }
+
+    local ok, err = pcall(function()
+      Autocmd.setup()
+      local autocmds = oil_autocmds()
+      H.eq(1, #autocmds)
+      H.eq(expected_pattern, autocmds[1].pattern)
+
+      vim.api.nvim_exec_autocmds("BufReadPost", { pattern = expected_pattern })
+      H.eq(1, setup_calls)
+    end)
+
+    package.loaded["denote.ui.highlights"] = original_highlights
     pcall(vim.api.nvim_del_augroup_by_name, "denote")
     H.remove(directory)
     if not ok then
