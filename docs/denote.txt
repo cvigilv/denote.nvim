@@ -132,9 +132,12 @@ The denote.nvim plugin provides a set of commands and Lua functions for
 managing Denote files. All core functionality can be accessed through both
 user commands and direct Lua function calls.
 
-The `:Denote` command is available as soon as the plugin loads. Use command-line
-completion to list its subcommands. It accepts at most one subcommand and
-reports an error for extra arguments or unsupported subcommands.
+The `:Denote` command is available as soon as the plugin loads. The command
+without a subcommand works in every buffer. Command-line completion lists its
+subcommands only when the current buffer has a Denote filetype, such as
+`markdown.denote`, and subcommands are rejected in other buffers. It accepts at
+most one subcommand and reports an error for extra arguments or unsupported
+subcommands.
 
                                                               *denote-api-core*
 3.1 Create a new note ~
