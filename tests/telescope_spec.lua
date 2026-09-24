@@ -120,7 +120,7 @@ return {
       directory = directory,
       prompts = {},
       integrations = {
-        oil = false,
+        highlights = false,
         telescope = { enabled = true, opts = {} },
       },
     }
