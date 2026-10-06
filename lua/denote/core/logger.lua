@@ -109,6 +109,14 @@ log.new = function(config, standalone)
   local outfile =
     vim.F.if_nil(outfile, vim.fs.joinpath(vim.fn.stdpath("cache"), plugin .. ".log"))
 
+  -- The log file's directory may not exist yet, for example in a fresh user
+  -- profile or a sandboxed build environment, and opening a file in a
+  -- missing directory is a hard failure that callers do not recover from.
+  -- Create it eagerly when file logging is enabled.
+  if config.use_file then
+    vim.fn.mkdir(vim.fs.dirname(outfile), "p")
+  end
+
   local obj
   if standalone then
     obj = log
