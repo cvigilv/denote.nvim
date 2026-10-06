@@ -2,9 +2,22 @@
 ---@author Carlos Vigil-Vásquez
 ---@license MIT 2025
 
+local Naming = require("denote.naming")
+
 local M = {}
 
 -- Helper functions
+---Signature as it appears in the filename, without the leading separator.
+---@param fields table
+---@return string|nil
+local function signature_value(fields)
+  local signature = fields.signature
+  if signature == nil or signature == "" then
+    return nil
+  end
+  return (Naming.as_component_string(signature, "signature"):gsub("^==", ""))
+end
+
 ---@param date_field string|number
 ---@param format_func function
 ---@return string
@@ -129,8 +142,9 @@ M.generate_org_frontmatter = function(fields)
     table.insert(lines, "#+identifier: " .. fields.identifier)
   end
 
-  if fields.signature then
-    table.insert(lines, "#+signature:  " .. fields.signature)
+  local signature = signature_value(fields)
+  if signature then
+    table.insert(lines, "#+signature:  " .. signature)
   end
 
   return table.concat(lines, "\n") .. "\n"
