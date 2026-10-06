@@ -115,8 +115,9 @@ return {
     H.matches("^date%s+=%s+2025%-01%-02T03:04:05", created_lines[3])
     H.eq('tags       = ["neovim", "lua"]', created_lines[4])
     H.eq('identifier = "20250102T030405"', created_lines[5])
-    H.eq("+++", created_lines[6])
-    H.eq("", created_lines[7])
+    H.eq('signature  = "1a"', created_lines[6])
+    H.eq("+++", created_lines[7])
+    H.eq("", created_lines[8])
   end),
 
   H.test("note creation initializes every configured filetype", function()

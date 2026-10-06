@@ -207,6 +207,11 @@ M.generate_yaml_frontmatter = function(fields)
     table.insert(lines, 'identifier: "' .. fields.identifier .. '"')
   end
 
+  local signature = signature_value(fields)
+  if signature then
+    table.insert(lines, 'signature:  "' .. signature .. '"')
+  end
+
   table.insert(lines, "---")
   return table.concat(lines, "\n") .. "\n"
 end
@@ -268,6 +273,11 @@ M.generate_toml_frontmatter = function(fields)
     table.insert(lines, 'identifier = "' .. fields.identifier .. '"')
   end
 
+  local signature = signature_value(fields)
+  if signature then
+    table.insert(lines, 'signature  = "' .. signature .. '"')
+  end
+
   table.insert(lines, "+++")
   return table.concat(lines, "\n") .. "\n"
 end
@@ -296,6 +306,11 @@ M.generate_neorg_frontmatter = function(fields)
 
   if fields.identifier then
     table.insert(lines, "identifier: " .. fields.identifier)
+  end
+
+  local signature = signature_value(fields)
+  if signature then
+    table.insert(lines, "signature: " .. signature)
   end
 
   table.insert(lines, "@end")
@@ -352,6 +367,11 @@ M.generate_text_frontmatter = function(fields)
 
   if fields.identifier then
     table.insert(lines, "identifier: " .. fields.identifier)
+  end
+
+  local signature = signature_value(fields)
+  if signature then
+    table.insert(lines, "signature:  " .. signature)
   end
 
   table.insert(lines, "---------------------------")
