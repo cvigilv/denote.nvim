@@ -47,4 +47,17 @@ return {
     H.matches("tags:%s+lua%s+neovimplugin", text)
     H.matches("identifier:%s+20250102T030405", text)
   end),
+
+  H.test("frontmatter omits an empty signature", function()
+    local unsigned = vim.tbl_extend("force", fields, { signature = "" })
+    for _, filetype in ipairs({ "org", "markdown-yaml", "markdown-toml", "neorg", "text" }) do
+      local generated = Frontmatter.generate_frontmatter(unsigned, filetype)
+      H.eq(nil, generated:find("signature", 1, true))
+    end
+  end),
+
+  H.test("frontmatter signature matches the filename component", function()
+    local spaced = vim.tbl_extend("force", fields, { signature = "1 a" })
+    H.matches("#%+signature:%s+1=a\n", Frontmatter.generate_frontmatter(spaced, "org"))
+  end),
 }
