@@ -20,6 +20,21 @@ return {
     H.eq("Test note", parsed.title)
     H.eq("lua neovimplugin", parsed.keywords)
     H.eq("20250102T030405", parsed.identifier)
+    H.eq("1a", parsed.signature)
+    H.remove(directory)
+  end),
+
+  H.test("frontmatter generates and parses TOML", function()
+    local directory = H.tmpdir()
+    local path = directory .. "/note.md"
+    local generated = Frontmatter.generate_frontmatter(fields, "markdown-toml")
+    H.write_file(path, vim.split(generated, "\n", { trimempty = true }))
+
+    local parsed = Frontmatter.parse_frontmatter(path, "markdown")
+    H.eq("Test note", parsed.title)
+    H.eq("lua neovimplugin", parsed.keywords)
+    H.eq("20250102T030405", parsed.identifier)
+    H.eq("1a", parsed.signature)
     H.remove(directory)
   end),
 
@@ -46,6 +61,8 @@ return {
     H.matches("^title:%s+Test note", text)
     H.matches("tags:%s+lua%s+neovimplugin", text)
     H.matches("identifier:%s+20250102T030405", text)
+    H.matches("signature:%s+1a", neorg)
+    H.matches("signature:%s+1a", text)
   end),
 
   H.test("frontmatter omits an empty signature", function()
@@ -59,5 +76,6 @@ return {
   H.test("frontmatter signature matches the filename component", function()
     local spaced = vim.tbl_extend("force", fields, { signature = "1 a" })
     H.matches("#%+signature:%s+1=a\n", Frontmatter.generate_frontmatter(spaced, "org"))
+    H.matches('signature%s+= "1=a"', Frontmatter.generate_frontmatter(spaced, "markdown-toml"))
   end),
 }
