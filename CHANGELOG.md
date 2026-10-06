@@ -9,6 +9,7 @@
 ### Fix
 
 - Create the cache directory before opening the log file, preventing startup failures in fresh profiles and sandboxed builds.
+- Write the signature to new notes' frontmatter for every filetype, not only Org. The value matches the filename's signature component, and an empty signature is omitted.
 
 ## [v0.2]
 
