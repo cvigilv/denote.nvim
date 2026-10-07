@@ -283,6 +283,50 @@ M.generate_toml_frontmatter = function(fields)
 end
 
 -- Neorg metadata
+---@param filename string
+---@return table|nil frontmatter
+M.parse_neorg_frontmatter = function(filename)
+  filename = filename or vim.api.nvim_buf_get_name(0)
+  local frontmatter = {}
+  local in_meta = false
+  local list_field
+
+  local lines = vim.fn.readfile(filename, "", 50)
+  for _, line in ipairs(lines) do
+    if line == "@document.meta" then
+      in_meta = true
+    elseif line == "@end" then
+      break
+    elseif in_meta and list_field then
+      -- Multi-line list: one item per line until the closing bracket
+      if line:match("^%s*%]") then
+        list_field = nil
+      else
+        frontmatter[list_field] = vim.trim(frontmatter[list_field] .. " " .. vim.trim(line))
+      end
+    elseif in_meta then
+      local field, value = line:match("^%s*([%w_]+):%s*(.*)")
+      if field then
+        field = field:lower()
+        if field == "categories" then
+          field = "keywords"
+        elseif field == "created" then
+          field = "date"
+        end
+
+        if value:match("^%[%s*$") then
+          list_field = field
+          frontmatter[field] = ""
+        else
+          frontmatter[field] = vim.trim((value:gsub("^%[", ""):gsub("%]$", "")))
+        end
+      end
+    end
+  end
+
+  return next(frontmatter) and frontmatter or nil
+end
+
 ---@param fields table
 ---@return string
 M.generate_neorg_frontmatter = function(fields)
@@ -397,6 +441,8 @@ M.parse_frontmatter = function(filename, filetype)
     elseif lines[1] == "+++" then
       return M.parse_toml_frontmatter(filename)
     end
+  elseif filetype == "norg" then
+    return M.parse_neorg_frontmatter(filename)
   else
     return M.parse_text_frontmatter(filename)
   end
