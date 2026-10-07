@@ -77,6 +77,13 @@ function M.replace_file(old_filename, new_filename)
 
   if source_buffer >= 0 then
     vim.api.nvim_buf_set_name(source_buffer, new_filename)
+    -- NOTE: Renaming flags the buffer as "not edited", so the next `:write` fails with E13.
+    -- Rewriting the unchanged contents clears the flag.
+    if not vim.bo[source_buffer].modified then
+      vim.api.nvim_buf_call(source_buffer, function()
+        vim.cmd("silent noautocmd write!")
+      end)
+    end
   end
 
   return true

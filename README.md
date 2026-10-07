@@ -45,6 +45,7 @@ Set `vim.g.denote` before the plugin loads. For example, with
       filetype = "markdown-toml",
       directory = "~/notes/",
       prompts = { "title", "keywords" },
+      sync_filename = true,
       integrations = {
         highlights = false,
         telescope = false,
