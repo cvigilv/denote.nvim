@@ -77,6 +77,24 @@ M.setup = function()
     end,
   })
 
+  -- Registered after the links refresh, which reads the note before it is renamed
+  vim.api.nvim_create_autocmd("BufWritePost", {
+    pattern = directory .. "*.{org,md,norg,txt}",
+    group = augroup,
+    desc = "Rename note to match its frontmatter",
+    callback = function(args)
+      local filename = vim.api.nvim_buf_get_name(args.buf)
+      if not vim.g.denote.sync_filename or not require("denote.naming").is_denote(filename) then
+        return
+      end
+      if vim.endswith(filename, ".norg") then
+        logger.info("Skipping filename sync for " .. filename .. ": neorg frontmatter support is limited")
+        return
+      end
+      require("denote.api").sync_filename(filename)
+    end,
+  })
+
   vim.api.nvim_create_autocmd("BufDelete", {
     pattern = directory .. "*",
     group = augroup,

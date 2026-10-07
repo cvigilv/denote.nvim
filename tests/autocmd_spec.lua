@@ -33,6 +33,32 @@ local function with_plugin(config, highlights, run)
   end
 end
 
+local function with_note(name, lines, run)
+  local directory = H.tmpdir()
+  vim.g.denote = Config.update_config({ directory = directory })
+  directory = vim.g.denote.directory
+  local note = directory .. name
+  H.write_file(note, lines)
+  _G.denote_cache_links = {}
+
+  local buffer
+  local ok, err = pcall(function()
+    Autocmd.setup()
+    vim.cmd("edit! " .. vim.fn.fnameescape(note))
+    buffer = vim.api.nvim_get_current_buf()
+    run(directory, note, buffer)
+  end)
+
+  if buffer and vim.api.nvim_buf_is_valid(buffer) then
+    vim.api.nvim_buf_delete(buffer, { force = true })
+  end
+  pcall(vim.api.nvim_del_augroup_by_name, "denote")
+  H.remove(directory)
+  if not ok then
+    error(err)
+  end
+end
+
 return {
   H.test("link cache scan retries after the note directory appears", function()
     local parent = H.tmpdir()
@@ -144,5 +170,52 @@ return {
       H.matches("Denote%s+xxx%s+match", vim.fn.execute("syntax list Denote"))
       H.matches("contained", vim.fn.execute("syntax list DenoteDate"))
     end)
+  end),
+
+  H.test("saving a note renames it to match its frontmatter", function()
+    local lines = {
+      "+++",
+      'title      = "New title"',
+      'tags       = ["a"]',
+      'identifier = "20250102T030405"',
+      "+++",
+    }
+    with_note("20250102T030405--old__a.md", lines, function(directory, note, buffer)
+      vim.cmd("write")
+      local renamed = directory .. "20250102T030405--new-title__a.md"
+      H.eq(nil, uv.fs_stat(note))
+      H.truthy(uv.fs_stat(renamed))
+      H.eq(renamed, vim.api.nvim_buf_get_name(buffer))
+      vim.cmd("write")
+    end)
+  end),
+
+  H.test("saving refuses to drop filename components missing from frontmatter", function()
+    local lines = { "+++", 'title      = "Old"', 'identifier = "20250102T030405"', "+++" }
+    with_note("20250102T030405--old__a.md", lines, function(_, note)
+      local ok, err = pcall(vim.cmd, "write")
+      H.eq(false, ok)
+      H.matches('keywords: missing from frontmatter, filename has "a"', err)
+      H.truthy(uv.fs_stat(note))
+    end)
+  end),
+
+  H.test("declining the identifier confirmation keeps the filename", function()
+    local lines = { "+++", 'title      = "Old"', 'identifier = "20990101T000000"', "+++" }
+    local original_confirm = vim.fn.confirm
+    local prompts = 0
+    vim.fn.confirm = function()
+      prompts = prompts + 1
+      return 2
+    end
+    local ok, err = pcall(with_note, "20250102T030405--old.md", lines, function(_, note)
+      vim.cmd("write")
+      H.eq(1, prompts)
+      H.truthy(uv.fs_stat(note))
+    end)
+    vim.fn.confirm = original_confirm
+    if not ok then
+      error(err)
+    end
   end),
 }
