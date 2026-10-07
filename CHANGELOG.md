@@ -5,9 +5,11 @@
 ### Added
 
 - Add a changelog covering the plugin's release history.
+- Rename notes on save so the filename matches the frontmatter, controlled by the `sync_filename` option (enabled by default). Missing frontmatter fields raise an error instead of dropping filename components, and identifier changes ask for confirmation.
 
 ### Fix
 
+- Keep buffers writable after a rename. Previously the next `:write` failed with `E13: File exists`.
 - Create the cache directory before opening the log file, preventing startup failures in fresh profiles and sandboxed builds.
 - Write the signature to new notes' frontmatter for every filetype, not only Org. The value matches the filename's signature component, and an empty signature is omitted.
 
