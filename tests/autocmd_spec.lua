@@ -190,6 +190,24 @@ return {
     end)
   end),
 
+  H.test("saving a Neorg note renames it to match its metadata", function()
+    local lines = {
+      "@document.meta",
+      "title: New title",
+      "categories: [",
+      "  a",
+      "  b",
+      "]",
+      "identifier: 20250102T030405",
+      "@end",
+    }
+    with_note("20250102T030405--old__a.norg", lines, function(directory, note)
+      vim.cmd("write")
+      H.eq(nil, uv.fs_stat(note))
+      H.truthy(uv.fs_stat(directory .. "20250102T030405--new-title__a_b.norg"))
+    end)
+  end),
+
   H.test("saving refuses to drop filename components missing from frontmatter", function()
     local lines = { "+++", 'title      = "Old"', 'identifier = "20250102T030405"', "+++" }
     with_note("20250102T030405--old__a.md", lines, function(_, note)

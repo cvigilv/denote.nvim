@@ -5,7 +5,7 @@
 ### Added
 
 - Add a changelog covering the plugin's release history.
-- Rename notes on save so the filename matches the frontmatter, controlled by the `sync_filename` option (enabled by default). Missing frontmatter fields raise an error instead of dropping filename components, and identifier changes ask for confirmation.
+- Rename notes of every filetype on save so the filename matches the frontmatter, controlled by the `sync_filename` option (enabled by default). Missing frontmatter fields raise an error instead of dropping filename components, and identifier changes ask for confirmation.
 
 ### Fix
 

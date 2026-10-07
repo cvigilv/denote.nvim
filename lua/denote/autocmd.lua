@@ -87,10 +87,6 @@ M.setup = function()
       if not vim.g.denote.sync_filename or not require("denote.naming").is_denote(filename) then
         return
       end
-      if vim.endswith(filename, ".norg") then
-        logger.info("Skipping filename sync for " .. filename .. ": neorg frontmatter support is limited")
-        return
-      end
       require("denote.api").sync_filename(filename)
     end,
   })

@@ -303,7 +303,7 @@ The rename is refused with an error when the frontmatter is missing, or when
 a component present in the filename is missing or empty in the frontmatter.
 The error lists each missing field with a suggested fix. A frontmatter
 identifier that differs from the filename's asks for confirmation first,
-because links to the note use the identifier. Neorg notes are not synced.
+because links to the note use the identifier.
 
 ==============================================================================
 4. Integrations                                          *denote-integrations*
