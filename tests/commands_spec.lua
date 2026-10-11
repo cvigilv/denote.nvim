@@ -13,6 +13,14 @@ local function load_command()
   return directory
 end
 
+local function edit_note(directory)
+  local path = directory .. "/20250102T030405--a-note.md"
+  H.write_file(path, { "note" })
+  vim.cmd("edit " .. vim.fn.fnameescape(path))
+  vim.bo.filetype = "markdown.denote"
+  return path
+end
+
 return {
   H.test("the Denote command is available in every buffer", function()
     local directory = load_command()
@@ -21,13 +29,18 @@ return {
     H.remove(directory)
   end),
 
-  H.test("Denote subcommands are only completed in Denote buffers", function()
+  H.test("rename subcommands are completed in every buffer", function()
     local directory = load_command()
 
     vim.bo.filetype = "lua"
-    H.eq({}, vim.fn.getcompletion("Denote ", "cmdline"))
+    H.eq({
+      "rename-file",
+      "rename-file-keywords",
+      "rename-file-signature",
+      "rename-file-title",
+    }, vim.fn.getcompletion("Denote ", "cmdline"))
 
-    vim.bo.filetype = "markdown.denote"
+    edit_note(directory)
     H.eq({
       "backlinks",
       "rename-file",
@@ -40,7 +53,7 @@ return {
 
   H.test("the Denote command dispatches every core subcommand", function()
     local directory = load_command()
-    vim.bo.filetype = "markdown.denote"
+    edit_note(directory)
     local api = require("denote.api")
     local names = {
       "denote",
@@ -80,7 +93,31 @@ return {
     H.eq(names, calls)
   end),
 
-  H.test("the Denote command rejects subcommands outside Denote buffers", function()
+  H.test("the Denote command dispatches renaming subcommands in any buffer", function()
+    local directory = load_command()
+    local path = directory .. "/report.pdf"
+    H.write_file(path, { "fake pdf" })
+    vim.cmd("edit " .. vim.fn.fnameescape(path))
+    vim.bo.filetype = "pdf"
+
+    local api = require("denote.api")
+    local calls = {}
+    local original = api.rename_file
+    api.rename_file = function()
+      calls[#calls + 1] = "rename_file"
+    end
+
+    local ok, err = pcall(vim.cmd, "Denote rename-file")
+
+    api.rename_file = original
+    H.remove(directory)
+    if not ok then
+      error(err)
+    end
+    H.eq({ "rename_file" }, calls)
+  end),
+
+  H.test("the Denote command rejects non-renaming subcommands outside Denote files", function()
     local directory = load_command()
     vim.bo.filetype = "lua"
 
@@ -93,7 +130,7 @@ return {
 
   H.test("the Denote command rejects invalid arguments", function()
     local directory = load_command()
-    vim.bo.filetype = "markdown.denote"
+    edit_note(directory)
 
     local unsupported, unsupported_error = pcall(vim.cmd, "Denote unknown")
     local excess, excess_error = pcall(vim.cmd, "Denote backlinks extra")
