@@ -2,6 +2,7 @@
 ---@author Carlos Vigil-Vásquez
 ---@license MIT 2025
 
+local Filesystem = require("denote.core.fs")
 local Naming = require("denote.naming")
 
 local M = {}
@@ -420,6 +421,164 @@ M.generate_text_frontmatter = function(fields)
 
   table.insert(lines, "---------------------------")
   return table.concat(lines, "\n") .. "\n"
+end
+
+-- Frontmatter updates
+
+local FORMATS = {
+  org = { generate = M.generate_org_frontmatter, field = "^#%+(%w+):", keywords = "filetags" },
+  yaml = { generate = M.generate_yaml_frontmatter, field = "^(%w+):", keywords = "tags" },
+  toml = { generate = M.generate_toml_frontmatter, field = "^(%w+)%s*=", keywords = "tags" },
+  neorg = { generate = M.generate_neorg_frontmatter, field = "^%s*([%w_]+):", keywords = "categories" },
+  text = { generate = M.generate_text_frontmatter, field = "^(%w+):", keywords = "tags" },
+}
+
+local UPDATABLE_FIELDS = { "title", "keywords", "identifier", "signature" }
+
+---Find the frontmatter block of a note.
+---@param lines string[]
+---@param filetype string
+---@return string|nil format Key of `FORMATS`, or nil when the note has no frontmatter
+---@return integer first First line of the block's fields
+---@return integer last Last line of the block's fields, `first - 1` when it has none
+local function locate_frontmatter(lines, filetype)
+  local function find_line(target, start)
+    for i = start, #lines do
+      if lines[i] == target then
+        return i
+      end
+    end
+  end
+
+  if filetype == "markdown" then
+    local format = ({ ["---"] = "yaml", ["+++"] = "toml" })[lines[1]]
+    local close = format and find_line(lines[1], 2)
+    if close then
+      return format, 2, close - 1
+    end
+  elseif filetype == "norg" then
+    local open = find_line("@document.meta", 1)
+    local close = open and find_line("@end", open + 1)
+    if close then
+      return "neorg", open + 1, close - 1
+    end
+  elseif filetype == "org" then
+    local last = 0
+    while lines[last + 1] and lines[last + 1]:match("^#%+") do
+      last = last + 1
+    end
+    if last > 0 then
+      return "org", 1, last
+    end
+  else
+    local last = 0
+    while lines[last + 1] and lines[last + 1] ~= "" and not lines[last + 1]:match("^%-+$") do
+      last = last + 1
+    end
+    for i = 1, last do
+      if lines[i]:match(FORMATS.text.field) then
+        return "text", 1, last
+      end
+    end
+  end
+
+  return nil, 0, 0
+end
+
+---Replace, remove, or append fields in the lines of a frontmatter block.
+---@param block string[]
+---@param format string
+---@param fields table<string,string>
+---@return string[] block
+local function update_block(block, format, fields)
+  local spec = FORMATS[format]
+  for _, field in ipairs(UPDATABLE_FIELDS) do
+    local value = fields[field]
+    if value ~= nil then
+      local key = field == "keywords" and spec.keywords or field
+      local function key_of(line)
+        local name = line:match(spec.field)
+        return name and name:lower()
+      end
+
+      -- Render the field with the same generator used for new notes
+      local replacement = {}
+      if value ~= "" then
+        for _, line in ipairs(vim.split(spec.generate({ [field] = value }), "\n")) do
+          if key_of(line) == key then
+            replacement = { line }
+            break
+          end
+        end
+      end
+
+      local first, last
+      for i, line in ipairs(block) do
+        if key_of(line) == key then
+          first, last = i, i
+          -- Neorg lists can span lines up to a closing bracket
+          if format == "neorg" and line:match(":%s*%[%s*$") then
+            for j = i + 1, #block do
+              if block[j]:match("^%s*%]") then
+                last = j
+                break
+              end
+            end
+          end
+          break
+        end
+      end
+
+      if first then
+        local updated = vim.list_extend(vim.list_slice(block, 1, first - 1), replacement)
+        block = vim.list_extend(updated, block, last + 1)
+      else
+        block = vim.list_extend(block, replacement)
+      end
+    end
+  end
+  return block
+end
+
+---Rewrite fields of a note's frontmatter. A loaded buffer of the note is edited and written
+---(including any unsaved changes); otherwise the file is edited on disk. Notes without
+---frontmatter are left untouched.
+---@param filename string
+---@param fields table<string,string> New values for `title`, `keywords` (written as `tags`, `filetags`, or `categories`), `signature`, or `identifier`; `""` removes the field
+---@return boolean updated Whether the note has frontmatter
+M.update_frontmatter = function(filename, fields)
+  for field in pairs(fields) do
+    if not vim.tbl_contains(UPDATABLE_FIELDS, field) then
+      error(string.format(
+        "[denote] Cannot update frontmatter field %q; expected one of: %s",
+        field,
+        table.concat(UPDATABLE_FIELDS, ", ")
+      ))
+    end
+  end
+
+  local filetype = vim.filetype.match({ filename = filename }) or ""
+  local buffer = Filesystem.buffer_for_path(filename)
+  local loaded = buffer >= 0 and vim.api.nvim_buf_is_loaded(buffer)
+  local lines = loaded and vim.api.nvim_buf_get_lines(buffer, 0, -1, false)
+    or vim.fn.readfile(filename)
+
+  local format, first, last = locate_frontmatter(lines, filetype)
+  if not format then
+    return false
+  end
+  local block = update_block(vim.list_slice(lines, first, last), format, fields)
+
+  if loaded then
+    vim.api.nvim_buf_set_lines(buffer, first - 1, last, false, block)
+    vim.api.nvim_buf_call(buffer, function()
+      vim.cmd("silent noautocmd write!")
+    end)
+  else
+    local updated = vim.list_extend(vim.list_slice(lines, 1, first - 1), block)
+    vim.fn.writefile(vim.list_extend(updated, lines, last + 1), filename)
+  end
+  return true
 end
 
 -- Generic interface for frontmatter handling

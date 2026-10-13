@@ -115,4 +115,19 @@ return {
     H.matches("#%+signature:%s+1=a\n", Frontmatter.generate_frontmatter(spaced, "org"))
     H.matches('signature%s+= "1=a"', Frontmatter.generate_frontmatter(spaced, "markdown-toml"))
   end),
+
+  H.test("frontmatter updates reject unknown field names", function()
+    local directory = H.tmpdir()
+    local path = directory .. "/20250102T030405--note.md"
+    local lines = { "---", 'tags:       ["a"]', "---" }
+    H.write_file(path, lines)
+
+    local ok, err = pcall(Frontmatter.update_frontmatter, path, { tags = "b" })
+    local contents = vim.fn.readfile(path)
+    H.remove(directory)
+
+    H.eq(false, ok)
+    H.matches('field "tags"; expected one of: title, keywords, identifier, signature', err)
+    H.eq(lines, contents)
+  end),
 }
