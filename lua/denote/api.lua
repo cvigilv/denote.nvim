@@ -121,12 +121,31 @@ function M.denote()
   end)
 end
 
-local function replace_note_file(old_filepath, new_filepath)
+---Rename a note and, when given, rewrite frontmatter fields to match the new filename.
+---@param old_filepath string
+---@param new_filepath string
+---@param frontmatter table<string,string>? Fields passed to `Frontmatter.update_frontmatter`
+---@return boolean status
+local function replace_note_file(old_filepath, new_filepath, frontmatter)
   local status = Filesystem.replace_file(old_filepath, new_filepath)
   if status then
     Links.rename_source(old_filepath, new_filepath)
+    if frontmatter and next(frontmatter) then
+      Frontmatter.update_frontmatter(new_filepath, frontmatter)
+    end
   end
   return status
+end
+
+---Frontmatter value of a filename component, which separates keywords with underscores.
+---@param field string
+---@param value string
+---@return string
+local function frontmatter_value(field, value)
+  if field == "keywords" then
+    return (value:gsub("_", " "))
+  end
+  return value
 end
 
 local function rename_component(filename, field, value)
@@ -144,7 +163,11 @@ local function rename_component(filename, field, value)
     components[field] = new_value
     local new_filename = Naming.generate_filename(components)
     local new_filepath = vim.g.denote.directory .. new_filename
-    return replace_note_file(filename, new_filepath --[[@as string]])
+    return replace_note_file(
+      filename,
+      new_filepath --[[@as string]],
+      { [field] = frontmatter_value(field, new_value) }
+    )
   end
 
   if value ~= nil then
@@ -192,6 +215,7 @@ function M.rename_file(filename)
     signature = "",
     extension = vim.fn.fnamemodify(filename, ":e"),
   }, Naming.parse_filename(filename, false))
+  local original = vim.deepcopy(fields)
   Prompts.collect(filename, fields, vim.g.denote.prompts, function(values)
     if values == nil then
       return
@@ -202,9 +226,16 @@ function M.rename_file(filename)
       error("[denote] The new filename doesn't look like a Denote filename")
     end
 
+    local frontmatter = {}
+    for _, field in ipairs({ "title", "keywords", "signature", "identifier" }) do
+      if values[field] ~= original[field] then
+        frontmatter[field] = frontmatter_value(field, values[field])
+      end
+    end
     replace_note_file(
       filename,
-      vim.fs.normalize(vim.fs.dirname(vim.fs.abspath(filename)) .. "/" .. new_filename)
+      vim.fs.normalize(vim.fs.dirname(vim.fs.abspath(filename)) .. "/" .. new_filename),
+      frontmatter
     )
   end)
 end

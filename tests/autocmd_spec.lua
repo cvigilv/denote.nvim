@@ -218,6 +218,34 @@ return {
     end)
   end),
 
+  H.test("saving after a title rename keeps the new title", function()
+    local lines = {
+      "+++",
+      'title      = "Old"',
+      'identifier = "20250102T030405"',
+      "+++",
+    }
+    with_note("20250102T030405--old.md", lines, function(directory, _, buffer)
+      local renamed = directory .. "20250102T030405--new-title.md"
+      require("denote.api").rename_file_title(nil, "New title")
+      H.eq('title      = "New title"', vim.api.nvim_buf_get_lines(buffer, 1, 2, false)[1])
+      H.eq(false, vim.bo[buffer].modified)
+
+      vim.cmd("write")
+      H.eq(renamed, vim.api.nvim_buf_get_name(buffer))
+      H.truthy(uv.fs_stat(renamed))
+    end)
+  end),
+
+  H.test("renaming a note without frontmatter leaves its contents alone", function()
+    with_note("20250102T030405--old.md", { "# Body" }, function(directory, _, buffer)
+      local renamed = directory .. "20250102T030405--new-title.md"
+      H.eq(true, require("denote.api").rename_file_title(nil, "New title"))
+      H.eq({ "# Body" }, vim.api.nvim_buf_get_lines(buffer, 0, -1, false))
+      H.eq({ "# Body" }, vim.fn.readfile(renamed))
+    end)
+  end),
+
   H.test("declining the identifier confirmation keeps the filename", function()
     local lines = { "+++", 'title      = "Old"', 'identifier = "20990101T000000"', "+++" }
     local original_confirm = vim.fn.confirm
