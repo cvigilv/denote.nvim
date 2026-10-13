@@ -139,6 +139,13 @@ make test
 Set `NVIM` to test a specific executable, for example `make test NVIM=nvim-0.11`.
 CI tests Neovim 0.11, stable, and nightly on Linux, plus stable on macOS and Windows.
 
+# LLM disclosure
+
+I work on this project with the help of an AI coding agent. I direct it, review it, and am
+responsible for the result. The agent assists me, not the other way around. For that reason my
+commits credit the agent with an `Assisted-by:` trailer instead of `Co-authored-by:`. No LLM
+provider is an author of these commits or accountable for them.
+
 # Credits
 
 * [historia/simple-denote.nivm](https://codeberg.org/historia/simple-denote.nvim) - This is a
