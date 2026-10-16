@@ -29,6 +29,18 @@ return {
     H.matches("^%[2025%-01%-02 ", components.date)
   end),
 
+  H.test("naming deslugifies components back into prose", function()
+    H.eq("old title", Naming.deslugify("old-title", "title"))
+    H.eq("food recipes", Naming.deslugify("food_recipes", "keywords"))
+    H.eq("1a", Naming.deslugify("1a", "signature"))
+    H.eq("", Naming.deslugify("", "title"))
+    H.eq("", Naming.deslugify(nil, "title"))
+
+    local ok, err = pcall(Naming.deslugify, "x", "invalid")
+    H.eq(false, ok)
+    H.matches("Invalid component type", err)
+  end),
+
   H.test("naming validates the complete basename", function()
     H.truthy(Naming.is_denote("/notes/20250102T030405.md"))
     H.truthy(Naming.is_denote("20250102T030405__one_two"))

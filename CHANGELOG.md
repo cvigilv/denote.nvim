@@ -5,6 +5,9 @@
 ### Added
 
 - Add a changelog covering the plugin's release history.
+- Allow the renaming commands to work on any file type, converting files such as PDFs to
+  Denote-compliant filenames in place, including files browsed in Oil buffers, with prose title
+  prompts that slugify on entry.
 
 ### Fix
 

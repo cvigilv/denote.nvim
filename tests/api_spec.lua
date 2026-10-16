@@ -194,6 +194,229 @@ return {
     H.remove(directory)
   end),
 
+  H.test("renaming a non-Denote pdf keeps it in place with a Denote filename", function()
+    local directory = H.tmpdir()
+    local old_path = directory .. "/report file.pdf"
+    H.write_file(old_path, { "fake pdf" })
+    vim.g.denote = { directory = directory .. "/", prompts = {} }
+
+    local Naming = require("denote.naming")
+    local original_timestamp = Naming.generate_timestamp
+    Naming.generate_timestamp = function()
+      return "20250102T030405"
+    end
+
+    local ok, err = pcall(function()
+      require("denote.api").rename_file(old_path)
+    end)
+    -- no prompts configured, so the rename proceeds synchronously
+
+    Naming.generate_timestamp = original_timestamp
+    if not ok then
+      H.remove(directory)
+      error(err)
+    end
+
+    H.eq({ "20250102T030405--report-file.pdf" }, vim.fn.readdir(directory))
+    H.eq(nil, vim.uv.fs_stat(old_path))
+    H.remove(directory)
+  end),
+
+  H.test("renaming title converts a non-Denote pdf in place", function()
+    local directory = H.tmpdir()
+    local old_path = directory .. "/outside/report.pdf"
+    H.write_file(old_path, { "fake pdf" })
+    vim.g.denote = { directory = directory .. "/notes", prompts = {} }
+
+    local Naming = require("denote.naming")
+    local original_timestamp = Naming.generate_timestamp
+    Naming.generate_timestamp = function()
+      return "20250102T030405"
+    end
+
+    local ok, err = pcall(function()
+      require("denote.api").rename_file_title(old_path, "New title")
+    end)
+
+    Naming.generate_timestamp = original_timestamp
+    if not ok then
+      H.remove(directory)
+      error(err)
+    end
+
+    H.eq({ "20250102T030405--new-title.pdf" }, vim.fn.readdir(directory .. "/outside"))
+    H.eq({}, vim.fn.readdir(directory .. "/notes"))
+    H.remove(directory)
+  end),
+
+  H.test("renaming from an oil buffer renames the entry under the cursor", function()
+    local directory = H.tmpdir()
+    local old_path = directory .. "/report.pdf"
+    H.write_file(old_path, { "fake pdf" })
+    vim.g.denote = { directory = directory .. "/", prompts = {} }
+
+    local Naming = require("denote.naming")
+    local original_timestamp = Naming.generate_timestamp
+    Naming.generate_timestamp = function()
+      return "20250102T030405"
+    end
+
+    package.preload["oil"] = function()
+      return {
+        get_current_dir = function()
+          return directory .. "/"
+        end,
+        get_cursor_entry = function()
+          return { name = "report.pdf" }
+        end,
+      }
+    end
+
+    local buffer = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_set_current_buf(buffer)
+    vim.api.nvim_buf_set_name(buffer, "oil://" .. directory)
+
+    local ok, err = pcall(function()
+      require("denote.api").rename_file()
+    end)
+
+    package.preload["oil"] = nil
+    Naming.generate_timestamp = original_timestamp
+    vim.api.nvim_buf_delete(buffer, { force = true })
+    if not ok then
+      H.remove(directory)
+      error(err)
+    end
+
+    H.eq({ "20250102T030405--report.pdf" }, vim.fn.readdir(directory))
+    H.remove(directory)
+  end),
+
+  H.test("the title prompt starts blank and slugifies prose on entry", function()
+    local directory = H.tmpdir()
+    local old_path = directory .. "/20250102T030405--old-title.md"
+    H.write_file(old_path, { "+++", 'title      = "My Old Title"', "+++", "" })
+    vim.g.denote = { directory = directory .. "/", prompts = {} }
+
+    local Filesystem = require("denote.core.fs")
+    local original_replace_file = Filesystem.replace_file
+    local original_input = vim.ui.input
+    local replaced = {}
+    local prompted
+
+    Filesystem.replace_file = function(old_filename, new_filename)
+      replaced = { old_filename, new_filename }
+      return true
+    end
+    vim.ui.input = function(options, callback)
+      prompted = options.default
+      callback("A Brand New Title!")
+    end
+
+    require("denote.api").rename_file_title(old_path)
+
+    Filesystem.replace_file = original_replace_file
+    vim.ui.input = original_input
+    H.remove(directory)
+
+    H.eq("", prompted)
+    H.eq(old_path, replaced[1])
+    H.eq(directory .. "/20250102T030405--a-brand-new-title.md", replaced[2])
+  end),
+
+  H.test("an empty title prompt keeps the frontmatter prose title", function()
+    local directory = H.tmpdir()
+    local old_path = directory .. "/20250102T030405--old-title.md"
+    H.write_file(old_path, { "+++", 'title      = "My Old Title"', "+++", "" })
+    vim.g.denote = { directory = directory .. "/", prompts = {} }
+
+    local Filesystem = require("denote.core.fs")
+    local original_replace_file = Filesystem.replace_file
+    local original_input = vim.ui.input
+    local replaced = {}
+
+    Filesystem.replace_file = function(old_filename, new_filename)
+      replaced = { old_filename, new_filename }
+      return true
+    end
+    vim.ui.input = function(_, callback)
+      callback("")
+    end
+
+    require("denote.api").rename_file_title(old_path)
+
+    Filesystem.replace_file = original_replace_file
+    vim.ui.input = original_input
+    H.remove(directory)
+
+    H.eq(old_path, replaced[1])
+    H.eq(directory .. "/20250102T030405--my-old-title.md", replaced[2])
+  end),
+
+  H.test("an empty title prompt keeps the deslugified filename title", function()
+    local old_path = "20250102T030405--old-title.txt"
+    vim.g.denote = { directory = "/notes/", prompts = {} }
+
+    local Filesystem = require("denote.core.fs")
+    local original_replace_file = Filesystem.replace_file
+    local original_input = vim.ui.input
+    local replaced = {}
+    local prompted
+
+    Filesystem.replace_file = function(old_filename, new_filename)
+      replaced = { old_filename, new_filename }
+      return true
+    end
+    vim.ui.input = function(options, callback)
+      prompted = options.default
+      callback("")
+    end
+
+    local ok, err = pcall(require("denote.api").rename_file_title, old_path)
+
+    Filesystem.replace_file = original_replace_file
+    vim.ui.input = original_input
+    if not ok then
+      error(err)
+    end
+
+    H.eq("", prompted)
+    H.eq(vim.fs.normalize(vim.fs.abspath(old_path)), replaced[2])
+  end),
+
+  H.test("the title prompt shows the basename for non-Denote files", function()
+    local directory = H.tmpdir()
+    local old_path = directory .. "/My Report.pdf"
+    H.write_file(old_path, { "fake pdf" })
+    vim.g.denote = { directory = directory .. "/", prompts = {} }
+
+    local Naming = require("denote.naming")
+    local original_timestamp = Naming.generate_timestamp
+    local original_input = vim.ui.input
+    local prompted
+    Naming.generate_timestamp = function()
+      return "20250102T030405"
+    end
+
+    vim.ui.input = function(options, callback)
+      prompted = options.default
+      callback("Fresh Title")
+    end
+
+    local ok, err = pcall(require("denote.api").rename_file_title, old_path)
+
+    Naming.generate_timestamp = original_timestamp
+    vim.ui.input = original_input
+    if not ok then
+      H.remove(directory)
+      error(err)
+    end
+
+    H.eq("", prompted)
+    H.eq({ "20250102T030405--fresh-title.pdf" }, vim.fn.readdir(directory))
+    H.remove(directory)
+  end),
+
   H.test("cancelling an interactive rename leaves the file alone", function()
     vim.g.denote = { directory = "/notes/", prompts = {} }
 

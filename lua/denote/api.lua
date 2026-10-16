@@ -29,8 +29,45 @@ local function telescope_enabled()
   return vim.g.denote.integrations.telescope.enabled
 end
 
-local function is_denote_buffer()
-  return vim.tbl_contains(vim.split(vim.bo.filetype, ".", { plain = true }), "denote")
+local RENAME_SUBCOMMANDS = {
+  "rename-file",
+  "rename-file-keywords",
+  "rename-file-signature",
+  "rename-file-title",
+}
+
+local function is_denote_file()
+  return Naming.is_denote(vim.fn.expand("%:p"))
+end
+
+---Resolve the path Denote subcommands operate on. Oil buffers list directory
+---contents under an `oil://` URL rather than visiting a file, so the entry
+---under the cursor provides the path; other buffers use the visited file.
+---@return string path
+local function current_path()
+  local bufname = vim.api.nvim_buf_get_name(0)
+  if bufname:sub(1, #"oil://") ~= "oil://" then
+    return vim.fn.expand("%:p")
+  end
+
+  local ok, oil = pcall(require, "oil")
+  if
+    not ok
+    or type(oil.get_cursor_entry) ~= "function"
+    or type(oil.get_current_dir) ~= "function"
+  then
+    error("[denote] Renaming from an oil buffer requires oil.nvim")
+  end
+
+  -- `get_current_dir` returns nil for remote adapters, so only local
+  -- entries end up here.
+  local directory = oil.get_current_dir()
+  local entry = oil.get_cursor_entry()
+  if directory == nil or entry == nil then
+    error("[denote] No local file under the cursor to rename")
+  end
+
+  return vim.fs.normalize(vim.fs.joinpath(directory, entry.name))
 end
 
 ---Dispatch a Denote command.
@@ -50,7 +87,11 @@ function M.dispatch(args)
   if not handler and not telescope_handler then
     error("[denote] Unsupported subcommand: " .. name)
   end
-  if not is_denote_buffer() then
+  -- Renaming works on any file type, matching the Emacs implementation
+  if
+    not vim.tbl_contains(RENAME_SUBCOMMANDS, name)
+    and not is_denote_file()
+  then
     error("[denote] Subcommands require a Denote buffer")
   end
   if telescope_handler then
@@ -63,13 +104,14 @@ end
 ---@param arg_lead string
 ---@return string[]
 function M.complete(arg_lead)
-  if not is_denote_buffer() then
-    return {}
-  end
-
   local matches = {}
   for name in pairs(SUBCOMMANDS) do
-    if vim.startswith(name, arg_lead) then
+    -- Renaming subcommands are offered in every buffer, matching the Emacs
+    -- implementation; the rest require the current file to be a Denote file
+    if
+      vim.startswith(name, arg_lead)
+      and (vim.tbl_contains(RENAME_SUBCOMMANDS, name) or is_denote_file())
+    then
       matches[#matches + 1] = name
     end
   end
@@ -129,21 +171,77 @@ local function replace_note_file(old_filepath, new_filepath)
   return status
 end
 
-local function rename_component(filename, field, value)
-  filename = filename or vim.fn.expand("%:p")
-  if not Naming.is_denote(filename) then
-    error("[denote] This doesn't look like a Denote file")
+---Build Denote filename components for an arbitrary file. Denote files are
+---parsed from their filename; other files get an identifier from the file's
+---timestamps, a title from its basename and keep their own extension.
+---@param filename string Path to the file
+---@return table components
+local function components_for_file(filename)
+  if Naming.is_denote(filename) then
+    local components = Naming.parse_filename(filename, false)
+    local ok, date = pcall(Naming.timestamp_to_date, components.identifier)
+    if ok then
+      components.date = date
+    end
+    return components
   end
 
-  local components = Naming.parse_filename(filename, false)
+  local extension = vim.fn.fnamemodify(filename, ":e")
+  return {
+    identifier = Naming.generate_timestamp(filename) or "",
+    title = Naming.as_component_string(vim.fn.fnamemodify(filename, ":t:r"), "title") or "",
+    date = "",
+    keywords = "",
+    signature = "",
+    extension = extension ~= "" and ("." .. extension) or "",
+  }
+end
+
+---Prompt-friendly description of the current title, used as the fallback
+---when the blank title prompt is answered with an empty string. The frontmatter
+---title when the file carries one, the deslugified title component for Denote
+---filenames without frontmatter, and the raw basename otherwise.
+---@param filename string Path to the file
+---@param components table Filename components
+---@return string title
+local function prompt_title(filename, components)
+  local ok, frontmatter = pcall(
+    Frontmatter.parse_frontmatter,
+    filename,
+    vim.filetype.match({ filename = filename })
+  )
+  if ok and frontmatter and frontmatter.title ~= nil and frontmatter.title ~= "" then
+    return frontmatter.title
+  end
+
+  if Naming.is_denote(filename) then
+    return Naming.deslugify(components.title or "", "title")
+  end
+
+  return vim.fn.fnamemodify(filename, ":t:r")
+end
+
+local function rename_component(filename, field, value)
+  filename = filename or current_path()
+  -- Build components for the current file, whatever its name or type
+  local components = components_for_file(filename)
+  -- The title prompt starts blank; empty answers keep the current title and
+  -- entered prose is slugified when the rename runs
+  local current_title = prompt_title(filename, components)
+  if field == "title" then
+    components.title = ""
+  end
   local function replace_file(new_value)
     if new_value == nil then
       return
     end
 
-    components[field] = new_value
+    components[field] = (field == "title" and new_value == "") and current_title or new_value
     local new_filename = Naming.generate_filename(components)
-    local new_filepath = vim.g.denote.directory .. new_filename
+    -- Keep the file in its current directory, matching the Emacs implementation
+    local new_filepath = vim.fs.normalize(
+      vim.fs.dirname(vim.fs.abspath(filename)) .. "/" .. new_filename
+    )
     return replace_note_file(filename, new_filepath --[[@as string]])
   end
 
@@ -179,23 +277,21 @@ function M.rename_file_keywords(filename, keywords)
 end
 
 ---Rename file into a Denote compliant format. If no arguments are passed, it runs interactively.
+---Works on any file type, keeping the file in its current directory.
 ---@param filename string? File to rename, defaults to current file.
 function M.rename_file(filename)
-  -- Parse filename to get current fields
-  filename = filename or vim.fn.expand("%:p")
-  -- Get file info and store as temporal fields
-  local fields = vim.tbl_extend("force", {}, {
-    identifier = Naming.generate_timestamp(filename) or "",
-    title = Naming.as_component_string(vim.fn.fnamemodify(filename, ":t:r"), "title") or "",
-    date = "",
-    keywords = "",
-    signature = "",
-    extension = vim.fn.fnamemodify(filename, ":e"),
-  }, Naming.parse_filename(filename, false))
+  -- Build components for the current file, whatever its name or type
+  filename = filename or current_path()
+  local fields = components_for_file(filename)
+  -- The title prompt starts blank; empty answers keep the current title and
+  -- entered prose is slugified when the rename runs
+  local current_title = prompt_title(filename, fields)
+  fields.title = ""
   Prompts.collect(filename, fields, vim.g.denote.prompts, function(values)
     if values == nil then
       return
     end
+    values.title = (values.title == "") and current_title or values.title
 
     local new_filename = Naming.generate_filename(values) --[[@as string]]
     if not Naming.is_denote(new_filename) then

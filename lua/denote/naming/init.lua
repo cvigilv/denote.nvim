@@ -137,6 +137,20 @@ function M.as_component_string(str, type)
   return str
 end
 
+---Convert a slugified Denote filename component back into prose, the inverse
+---of `as_component_string`, for editing in a prompt. Underscores, hyphens,
+---prefix characters and so on become spaces.
+---@param str string Slugified component string
+---@param type string Component type ("title", "keywords", "signature")
+---@return string|nil Deslugified string or nil if an error occurs
+function M.deslugify(str, type)
+  if not vim.tbl_contains(vim.tbl_keys(M.SEPARATORS), type) then
+    error("[denote] Invalid component type: " .. type)
+    return nil
+  end
+  return String.trim((str or ""):gsub(vim.pesc(M.SEPARATORS[type]), " "))
+end
+
 ---Generates a timestamp for a given file based on its creation or modification time. If no file is provided, generate for current time
 ---@param filename string? The path to the file
 ---@return string|nil Denote formatted timestamp or nil if an error occurs

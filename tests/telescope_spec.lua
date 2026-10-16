@@ -146,6 +146,8 @@ return {
     end
 
     vim.cmd("runtime plugin/denote.lua")
+    H.write_file(directory .. "/20250102T030405--one.md", { "one" })
+    vim.cmd("edit " .. vim.fn.fnameescape(directory .. "/20250102T030405--one.md"))
     vim.bo.filetype = "markdown.denote"
     local completions = vim.fn.getcompletion("Denote ", "cmdline")
     vim.cmd("Denote search")

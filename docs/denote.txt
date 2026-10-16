@@ -170,6 +170,17 @@ Rename an existing file to comply with the Denote naming scheme. If no
 arguments are provided, prompts the user for each field in the configuration's
 `prompts` option. Defaults to the current file if `filename` is not provided.
 
+This and the following renaming commands work on any file type, such as
+`.pdf` files, matching the Emacs implementation. The file stays in its
+current directory, its extension is preserved, the identifier is generated
+from the file's timestamps, and the title comes from the basename for
+files that do not already have a Denote filename. The title prompt matches
+the Emacs approach: it starts blank, the entered prose is slugified for
+the filename, and the current title, which is the frontmatter title when
+the file has one, otherwise the deslugified Denote title or the raw
+basename, is kept when the prompt is left empty. When browsing with oil,
+the renaming commands operate on the entry under the cursor.
+
 Command: >vim
     :Denote rename-file
 <

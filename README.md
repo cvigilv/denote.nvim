@@ -59,16 +59,25 @@ configuration in `vim.g.denote`.
 
 # :Denote Command
 
-The bare `:Denote` command is available in every buffer. Its subcommands are listed and
-accepted only when the current buffer has a Denote filetype, such as `markdown.denote`.
+The bare `:Denote` command is available in every buffer. Its renaming subcommands work in
+any buffer and accept any file type, such as `.pdf` files, matching the Emacs
+implementation: the file is kept in its current directory and converted to a
+Denote-compliant filename with its identifier generated from the file's timestamps, a
+title generated from the basename, and its extension preserved. The title prompt starts
+blank and the entered prose is slugified for the filename, matching the Emacs approach;
+the current prose title is kept when the prompt is left empty. When browsing with
+[oil.nvim](https://github.com/stevearc/oil.nvim), the renaming commands operate on the
+entry under the cursor. The remaining subcommands
+are listed and accepted only when the current file has a Denote filename.
 
 Currently, the `:Denote` command supports the following subcommands:
 
 - `:Denote`, create a new note interactively
-- `:Denote rename-file`, renames the current note interactively
-- `:Denote rename-file-title`, change the title of the current note
-- `:Denote rename-file-keywords`, change the keywords of the current note
-- `:Denote rename-file-signature`, change the signature of the current note
+- `:Denote rename-file`, renames the current file interactively to a Denote-compliant
+  filename, for any file type
+- `:Denote rename-file-title`, change the title of the current file, any file type
+- `:Denote rename-file-keywords`, change the keywords of the current file, any file type
+- `:Denote rename-file-signature`, change the signature of the current file, any file type
 - `:Denote backlinks`, populates and opens loclist with backlinks to current note
 
 # Extensions
