@@ -51,6 +51,43 @@ return {
     H.remove(directory)
   end),
 
+  H.test("frontmatter generates and parses Neorg metadata", function()
+    local directory = H.tmpdir()
+    local path = directory .. "/note.norg"
+    local generated = Frontmatter.generate_frontmatter(fields, "neorg")
+    H.write_file(path, vim.split(generated, "\n", { trimempty = true }))
+
+    local parsed = Frontmatter.parse_frontmatter(path)
+    H.eq("Test note", parsed.title)
+    H.eq("lua neovimplugin", parsed.keywords)
+    H.eq("20250102T030405", parsed.identifier)
+    H.eq("1a", parsed.signature)
+    H.remove(directory)
+  end),
+
+  H.test("Neorg metadata parses multi-line categories", function()
+    local directory = H.tmpdir()
+    local path = directory .. "/note.norg"
+    H.write_file(path, {
+      "@document.meta",
+      "title: Test note",
+      "categories: [",
+      "  lua",
+      "  neovim",
+      "]",
+      "created: 2025-01-02",
+      "@end",
+      "",
+      "body: not metadata",
+    })
+
+    local parsed = Frontmatter.parse_frontmatter(path)
+    H.eq("lua neovim", parsed.keywords)
+    H.eq("2025-01-02", parsed.date)
+    H.eq(nil, parsed.body)
+    H.remove(directory)
+  end),
+
   H.test("frontmatter supports Neorg and plain text", function()
     local neorg = Frontmatter.generate_frontmatter(fields, "neorg")
     local text = Frontmatter.generate_frontmatter(fields, "text")
@@ -77,5 +114,20 @@ return {
     local spaced = vim.tbl_extend("force", fields, { signature = "1 a" })
     H.matches("#%+signature:%s+1=a\n", Frontmatter.generate_frontmatter(spaced, "org"))
     H.matches('signature%s+= "1=a"', Frontmatter.generate_frontmatter(spaced, "markdown-toml"))
+  end),
+
+  H.test("frontmatter updates reject unknown field names", function()
+    local directory = H.tmpdir()
+    local path = directory .. "/20250102T030405--note.md"
+    local lines = { "---", 'tags:       ["a"]', "---" }
+    H.write_file(path, lines)
+
+    local ok, err = pcall(Frontmatter.update_frontmatter, path, { tags = "b" })
+    local contents = vim.fn.readfile(path)
+    H.remove(directory)
+
+    H.eq(false, ok)
+    H.matches('field "tags"; expected one of: title, keywords, identifier, signature', err)
+    H.eq(lines, contents)
   end),
 }

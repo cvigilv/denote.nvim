@@ -12,7 +12,7 @@ return {
     local replaced = {}
     Filesystem.replace_file = function(old_filename, new_filename)
       replaced = { old_filename, new_filename }
-      return true
+      return vim.uv.fs_rename(old_filename, new_filename)
     end
 
     local ok = require("denote.api").rename_file_title(old_path, "New title")
@@ -47,6 +47,24 @@ return {
     H.eq(cached_links, _G.denote_cache_links[Filesystem.canonical_path(new_path)])
     H.truthy(vim.uv.fs_stat(new_path))
     H.remove(directory)
+  end),
+
+  H.test("renaming keywords rewrites the frontmatter tags", function()
+    local directory = H.tmpdir()
+    local old_path = directory .. "/20250102T030405--note__a.md"
+    local new_path = directory .. "/20250102T030405--note__b_c.md"
+    H.write_file(old_path, { "---", 'title:      "Note"', 'tags:       ["a"]', "---", "Body" })
+    vim.g.denote = { directory = directory .. "/", prompts = {} }
+    _G.denote_cache_links = {}
+
+    local ok, err = pcall(require("denote.api").rename_file_keywords, old_path, "b_c")
+    local lines = vim.uv.fs_stat(new_path) and vim.fn.readfile(new_path)
+    H.remove(directory)
+    if not ok then
+      error(err)
+    end
+
+    H.eq({ "---", 'title:      "Note"', 'tags:       ["b", "c"]', "---", "Body" }, lines)
   end),
 
   H.test("note creation sequences asynchronous prompts", function()

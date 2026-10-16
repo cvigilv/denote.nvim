@@ -47,6 +47,9 @@ return {
     H.eq(nil, vim.uv.fs_stat(marker))
     H.eq({ "original contents" }, vim.fn.readfile(new_path))
     assert_buffer_path(buffer, new_path)
+    vim.api.nvim_buf_call(buffer, function()
+      vim.cmd("write")
+    end)
 
     close_buffer(buffer)
     H.remove(directory)

@@ -6,6 +6,7 @@ denote-api-rename-file	denote.txt	/*denote-api-rename-file*
 denote-api-rename-keywords	denote.txt	/*denote-api-rename-keywords*
 denote-api-rename-signature	denote.txt	/*denote-api-rename-signature*
 denote-api-rename-title	denote.txt	/*denote-api-rename-title*
+denote-api-sync-filename	denote.txt	/*denote-api-sync-filename*
 denote-file-naming-scheme	denote.txt	/*denote-file-naming-scheme*
 denote-highlights	denote.txt	/*denote-highlights*
 denote-highlights-setup	denote.txt	/*denote-highlights-setup*

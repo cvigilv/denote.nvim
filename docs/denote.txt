@@ -97,6 +97,7 @@ The following options are available: >lua
       filetype = "markdown-toml",           -- File type for new notes
       directory = "~/notes/",               -- Directory for Denote files
       prompts = { "title", "keywords" },    -- Fields to prompt during creation
+      sync_filename = true,                 -- Rename notes on save, refer to |denote-api-sync-filename|
       integrations = {                      -- Integrations, refer to |denote-integrations|
         highlights = false,
         telescope = false,
@@ -122,6 +123,10 @@ OPTIONS                                                   *denote-setup-options*
     Array of field names to prompt the user for during note creation and
     renaming. Available fields are: "date", "title", "keywords", "signature",
     and "extension". Defaults to { "title", "keywords" }.
+
+{sync_filename}
+    Rename a note after each save so its filename matches its frontmatter.
+    Refer to |denote-api-sync-filename| for details. Defaults to true.
 
 {integrations}
     Table of integrations with other plugins. Refer to |denote-integrations| for
@@ -274,6 +279,31 @@ Lua function: >lua
 <
 
 Returns: nil
+
+                                                    *denote-api-sync-filename*
+3.7 Sync filename with frontmatter ~
+
+Rename a note so its identifier, title, keywords, and signature match its
+frontmatter. The frontmatter takes priority, and the extension is kept. When
+the {sync_filename} option is enabled, this runs after every save of a note in
+the configured directory. Defaults to the current file if `filename` is not
+provided.
+
+Lua function: >lua
+    require("denote.api").sync_filename(filename?)
+<
+
+Parameters:
+    {filename?} (string) - File path to sync. If not provided, uses the
+                           current buffer's file.
+
+Returns: the note's path after syncing.
+
+The rename is refused with an error when the frontmatter is missing, or when
+a component present in the filename is missing or empty in the frontmatter.
+The error lists each missing field with a suggested fix. A frontmatter
+identifier that differs from the filename's asks for confirmation first,
+because links to the note use the identifier.
 
 ==============================================================================
 4. Integrations                                          *denote-integrations*

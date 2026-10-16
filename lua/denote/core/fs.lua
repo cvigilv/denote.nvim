@@ -33,7 +33,10 @@ function M.canonical_path(path, base)
   return path
 end
 
-local function buffer_for_path(path)
+---Find the buffer whose name resolves to `path`.
+---@param path string
+---@return integer buffer Buffer handle, or -1 when no buffer uses the path
+function M.buffer_for_path(path)
   local target = M.canonical_path(path)
   for _, buffer in ipairs(vim.api.nvim_list_bufs()) do
     local name = vim.api.nvim_buf_get_name(buffer)
@@ -64,8 +67,8 @@ function M.replace_file(old_filename, new_filename)
     error(string.format("[denote] Cannot inspect destination %q: %s", new_filename, stat_error))
   end
 
-  local source_buffer = buffer_for_path(old_filename)
-  local destination_buffer = buffer_for_path(new_filename)
+  local source_buffer = M.buffer_for_path(old_filename)
+  local destination_buffer = M.buffer_for_path(new_filename)
   if destination_buffer >= 0 and destination_buffer ~= source_buffer then
     error(string.format("[denote] Cannot rename to %q: another buffer uses that name", new_filename))
   end
@@ -77,6 +80,13 @@ function M.replace_file(old_filename, new_filename)
 
   if source_buffer >= 0 then
     vim.api.nvim_buf_set_name(source_buffer, new_filename)
+    -- NOTE: Renaming flags the buffer as "not edited", so the next `:write` fails with E13.
+    -- Rewriting the unchanged contents clears the flag.
+    if not vim.bo[source_buffer].modified then
+      vim.api.nvim_buf_call(source_buffer, function()
+        vim.cmd("silent noautocmd write!")
+      end)
+    end
   end
 
   return true

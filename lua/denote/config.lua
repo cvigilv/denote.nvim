@@ -14,6 +14,7 @@
 ---@field filetype string? Default note file type
 ---@field directory string? Denote files directory
 ---@field prompts string[]? File creation/renaming prompt order
+---@field sync_filename boolean? Rename notes on save to match their frontmatter
 ---@field integrations Denote.Integrations.Configuration? Extensions configuration
 
 local Filesystem = require("denote.core.fs")
@@ -40,6 +41,7 @@ local defaults = {
   filetype = "markdown-toml",
   directory = "~/notes/",
   prompts = { "title", "keywords" }, -- "date", "title", "keywords", "signature", "extension"
+  sync_filename = true,
   integrations = {
     highlights = false,
     telescope = false,
@@ -62,6 +64,7 @@ local function validate_config(opts)
     end, "supported prompt name")
   end
 
+  vim.validate("denote.sync_filename", opts.sync_filename, "boolean")
   vim.validate("denote.integrations", opts.integrations, "table")
   vim.validate("denote.integrations.highlights", opts.integrations.highlights, "boolean")
   vim.validate(
